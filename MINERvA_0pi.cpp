@@ -14,6 +14,7 @@
 #include <TVector3.h>
 
 #include <filesystem>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,26 +24,24 @@ std::vector<ROOT::RDF::RResultPtr<TH1>>
 make_plots(T &&df_in, std::string variable = "dtl", std::string prefix = "") {
   auto muon_cut = df_in.Filter(
       [](const TLorentzVector &muon) {
-        return muon.P() > 1.5 && muon.P() < 20.0 &&
-               muon.Theta() < 25 * M_PI / 180;
+        return muon.P() > 1.5 && muon.P() < 10.0 &&
+               muon.Theta() < 20 * M_PI / 180;
       },
       {"muon_p"});
   auto proton_momentum_min_cut = muon_cut.Filter(
       [](const TLorentzVector &pproton) { return pproton.P() > 0.45; },
       {"full_hadron"});
-  // auto proton_momentum_min_max_cut = proton_momentum_min_cut.Filter(
-  //     [](const TLorentzVector &pproton) { return pproton.P() < 1.2; },
-  //     {"full_hadron"});
-  // auto proton_momentum_min_cut_theta_cut =
-  // proton_momentum_min_max_cut.Filter(
-  //     [](const TLorentzVector &pproton) {
-  //       return pproton.Theta() < 70 * M_PI / 180;
-  //     },
-  //     {"full_hadron"});
+  auto proton_momentum_min_max_cut = proton_momentum_min_cut.Filter(
+      [](const TLorentzVector &pproton) { return pproton.P() < 1.2; },
+      {"full_hadron"});
+  auto proton_momentum_min_cut_theta_cut = proton_momentum_min_max_cut.Filter(
+      [](const TLorentzVector &pproton) {
+        return pproton.Theta() < 70 * M_PI / 180;
+      },
+      {"full_hadron"});
   auto make_DTL_plot = [&](auto &&df_in, std::string plot_name) {
     auto h = df_in.template Histo1D<double>(
-        {plot_name.c_str(), plot_name.c_str(), 200, -1., 1.}, variable,
-        "weight");
+        {plot_name.c_str(), plot_name.c_str(), 200, -1., 1.}, "dtl", "weight");
     return h;
   };
   std::vector<ROOT::RDF::RResultPtr<TH1>> plots{};
@@ -50,12 +49,12 @@ make_plots(T &&df_in, std::string variable = "dtl", std::string prefix = "") {
   plots.emplace_back(make_DTL_plot(muon_cut, prefix + variable + "_muon_cut"));
   plots.emplace_back(make_DTL_plot(
       proton_momentum_min_cut, prefix + variable + "_proton_momentum_min_cut"));
-  // plots.emplace_back(make_DTL_plot(proton_momentum_min_max_cut,
-  //                                  prefix +
-  //                                  "dtl_proton_momentum_min_max_cut"));
-  // plots.emplace_back(
-  //     make_DTL_plot(proton_momentum_min_cut_theta_cut,
-  //                   prefix + "dtl_proton_momentum_min_cut_theta_cut"));
+  plots.emplace_back(
+      make_DTL_plot(proton_momentum_min_max_cut,
+                    prefix + variable + "_proton_momentum_min_max_cut"));
+  plots.emplace_back(
+      make_DTL_plot(proton_momentum_min_cut_theta_cut,
+                    prefix + variable + "_proton_momentum_min_cut_theta_cut"));
   return plots;
 }
 
@@ -109,7 +108,7 @@ std::vector<ROOT::RDF::RResultPtr<TH1>> make_2D_plots(ROOT::RDF::RNode df_in,
   return plots;
 }
 
-void plot_and_save_2d(TH2 *plot, std::string path_prefix = "2dplots_pi0/") {
+void plot_and_save_2d(TH2 *plot, std::string path_prefix = "2dplots/") {
   thread_local style::global_style style{};
 
   auto path_dir = std::filesystem::path(path_prefix + "test");
@@ -132,6 +131,7 @@ int main(int argc, char *argv[]) {
   gSystem->ResetSignal(kSigIllegalInstruction);
   TH1::AddDirectory(false);
   ROOT::EnableImplicitMT();
+
   std::vector<std::string> files{};
   for (int i = 1; i < argc; i++) {
     files.push_back(argv[i]);
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
   auto count = d.Count();
 
   auto d_TKIResult =
-      CommonVariableDefine(DoTKICut_MINERvA(d))
+      CommonVariableDefine0PI(DoTKICut_MINERvA0PI(d))
           .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
                   {"TKIVars"})
           .Define("realpL",
@@ -170,12 +170,12 @@ int main(int argc, char *argv[]) {
                   [](const TLorentzVector &full_hadron) {
                     return full_hadron.CosTheta();
                   },
-                  {"leading_proton"})
+                  {"full_hadron"})
           .Define("p_theta",
                   [](const TLorentzVector &full_hadron) {
                     return full_hadron.Theta() / M_PI * 180.;
                   },
-                  {"leading_proton"})
+                  {"full_hadron"})
           .Define("dalphat", [](TKIVars &vars) { return vars.dalphat; },
                   {"TKIVars"})
           .Define("dpL", [](TKIVars &vars) { return vars.dpL; }, {"TKIVars"})
@@ -185,14 +185,30 @@ int main(int argc, char *argv[]) {
 
   ROOT::RDF::RSnapshotOptions opts;
   opts.fMode = "RECREATE";
-  opts.fLazy = false;
+  opts.fLazy = true;
 
-  auto action = d_TKIResult.Snapshot("tree", "outputpi0.root",
-                                     {"TKIVars", "weight", "targetA", "targetZ",
-                                      "neutrino_p", "muon_p", "full_hadron"},
-                                     opts);
+  auto action =
+      d_TKIResult.Snapshot("tree", "output0pi.root",
+                           {"TKIVars", "weight", "targetA", "targetZ",
+                            "neutrino_p", "muon_p", "full_hadron", "dpl_alt",
+                            "realpn", "factor", "realpL", "flag", "outsize"},
+                           opts);
 
+  // const double MINERvA_pi0_IApN_bin_edges[] = {
+  //     0,     0.055, 0.11,  0.165, 0.22,  0.275, 0.33,
+  //     0.385, 0.44,  0.495, 0.56,  0.655, 0.81};
+  // auto h =
+  //     d_TKIResult
+  //         .Define("IApN", [](TKIVars &vars) { return vars.IApN; },
+  //         {"TKIVars"}) .Histo1D<double>({"h", "h", 12,
+  //         MINERvA_pi0_IApN_bin_edges}, "IApN",
+  //                          "weight");
+  // auto report = d_TKIResult.Report();
+  // report->Print();
+  // h->Scale((12. / 13.) / count.GetValue(), "width");
+  // h->SaveAs("IApN.root");
   auto plots = make_plots(d_TKIResult);
+
   {
     auto plots_dat = make_plots(d_TKIResult, "dalphat");
     std::move(plots_dat.begin(), plots_dat.end(), std::back_inserter(plots));
@@ -201,46 +217,44 @@ int main(int argc, char *argv[]) {
     auto plots_pn = make_plots(d_TKIResult, "IApN");
     std::move(plots_pn.begin(), plots_pn.end(), std::back_inserter(plots));
   }
-  // {
-  //   auto plots_QE = make_plots(
-  //       d_TKIResult.Filter(
-  //           [](TKIEvent &event) {
-  //             return event.count_out(2212) + event.count_out(2112) == 1;
-  //           },
-  //           {"TKIEvent"}),
-  //       "1p1h");
-  //   auto plots_2p2h = make_plots(
-  //       d_TKIResult.Filter(
-  //           [](TKIEvent &event) {
-  //             return event.count_out(2212) + event.count_out(2112) > 1;
-  //           },
-  //           {"TKIEvent"}),
-  //       "2p2h");
+  {
+    auto plots_QE = make_plots(
+        d_TKIResult.Filter(
+            [](TKIEvent &event) {
+              return event.count_out(2212) + event.count_out(2112) == 1;
+            },
+            {"TKIEvent"}),
+        "1p1h");
+    auto plots_2p2h = make_plots(
+        d_TKIResult.Filter(
+            [](TKIEvent &event) {
+              return event.count_out(2212) + event.count_out(2112) > 1;
+            },
+            {"TKIEvent"}),
+        "2p2h");
 
-  //   std::move(plots_QE.begin(), plots_QE.end(), std::back_inserter(plots));
-  //   std::move(plots_2p2h.begin(), plots_2p2h.end(),
-  //   std::back_inserter(plots));
-  // }
+    std::move(plots_QE.begin(), plots_QE.end(), std::back_inserter(plots));
+    std::move(plots_2p2h.begin(), plots_2p2h.end(), std::back_inserter(plots));
+  }
 
-  // {
-  //   auto plots_QE = make_plots(
-  //       d_TKIResult.Filter([](event &e) { return e.flag.qel; }, {"e"}),
-  //       "QE");
-  //   // auto plots_QE_SRC = make_plots(
-  //   //     d_TKIResult.Filter([](event &e) { return e.flag.qel; }, {"e"}),
-  //   //     "QE");
-  //   auto plots_2p2h = make_plots(
-  //       d_TKIResult.Filter([](event &e) { return e.flag.mec; }, {"e"}),
-  //       "MEC");
+  {
+    auto plots_QE = make_plots(
+        d_TKIResult.Filter([](event &e) { return e.flag.qel; }, {"e"}), "dtl",
+        "QE");
+    // auto plots_QE_SRC = make_plots(
+    //     d_TKIResult.Filter([](event &e) { return e.flag.qel; }, {"e"}),
+    //     "QE");
+    auto plots_2p2h = make_plots(
+        d_TKIResult.Filter([](event &e) { return e.flag.mec; }, {"e"}), "dtl",
+        "MEC");
 
-  //   std::move(plots_QE.begin(), plots_QE.end(), std::back_inserter(plots));
-  //   std::move(plots_2p2h.begin(), plots_2p2h.end(),
-  //   std::back_inserter(plots));
-  // }
-  // {
-  //   auto plot_2d = make_2D_plots(d_TKIResult, "2D");
-  //   std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
-  // }
+    std::move(plots_QE.begin(), plots_QE.end(), std::back_inserter(plots));
+    std::move(plots_2p2h.begin(), plots_2p2h.end(), std::back_inserter(plots));
+  }
+  {
+    auto plot_2d = make_2D_plots(d_TKIResult, "2D");
+    std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
+  }
 
   {
     auto plot_2d = make_2D_plots(
@@ -249,7 +263,7 @@ int main(int argc, char *argv[]) {
     std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
   }
 
-  auto file = std::make_unique<TFile>("dtlpi0.root", "RECREATE");
+  auto file = std::make_unique<TFile>("dtl_0pi.root", "RECREATE");
   for (auto &&plot : plots) {
     plot->Scale((12. / 13.) / count.GetValue(), "width");
     file->Add(plot.GetPtr());
@@ -269,5 +283,6 @@ int main(int argc, char *argv[]) {
 
   file->Write();
   file->Close();
+
   return 0;
 }

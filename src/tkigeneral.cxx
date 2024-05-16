@@ -3,6 +3,8 @@
 #include "TF1.h"
 #include "TLorentzVector.h"
 
+#include <TMath.h>
+#include <TRandom.h>
 #include <cmath>
 #include <iostream>
 
@@ -623,7 +625,7 @@ void getCommonTKI(const int targetA, const int targetZ,
                   const TLorentzVector *tmp4pScatter,
                   const TLorentzVector *tmp4pRecoil, double &dalphat,
                   double &dphit, double &dpt, double &dpTT, double &beamCalcP,
-                  double &IApN, double &recoilM, double &recoilP) {
+                  double &IApN, double &recoilM, double &recoilP, double &dpL) {
   //
   // note that this is for general calculation, all particle energy is
   // sqrt(p^2+m^2)!
@@ -676,8 +678,7 @@ void getCommonTKI(const int targetA, const int targetZ,
         nuclearMassStar(targetA, targetZ); // only assume one nucleon removal
     // double getdPL(const double beamMass, const double dPT, const double pLFS,
     // const double eFS, const double m1, const double m2)
-    const double dpL =
-        getdPL(tmp4pBeam->M(), dpt, pLFS, tmp4pAllFS.E(), ma, mastar);
+    dpL = getdPL(tmp4pBeam->M(), dpt, pLFS, tmp4pAllFS.E(), ma, mastar);
 
     beamCalcP = gkDPLBAD;
     IApN = gkDPLBAD;
@@ -709,6 +710,41 @@ TKIVars getCommonTKI(const int targetA, const int targetZ,
   TKIVars ret;
   getCommonTKI(targetA, targetZ, tmp4pBeam, tmp4pScatter, tmp4pRecoil,
                ret.dalphat, ret.dphit, ret.dpt, ret.dpTT, ret.beamCalcP,
-               ret.IApN, ret.recoilM, ret.recoilP);
+               ret.IApN, ret.recoilM, ret.recoilP, ret.dpL);
   return ret;
+}
+
+double getdpLMassless(TLorentzVector pmu, TLorentzVector p_hadron) {
+  const double M = nuclearMass(12, 6);
+  const double M1 = nuclearMassStar(12, 6);
+  const double Emu = pmu.E();
+  const double Ep = p_hadron.E();
+  const double pmuL = pmu.Pz();
+  const double ppL = p_hadron.Pz();
+  const double pmuT = pmu.Pt();
+  const double ppT = p_hadron.Pt();
+  const auto p = pmu + p_hadron;
+  const double pNT = p.Pt();
+
+  using TMath::Power;
+  return -0.5 *
+         (Power(Emu, 2) + Power(Ep, 2) + Power(M, 2) - Power(M1, 2) +
+          2 * M * pmuL + Power(pmuL, 2) - Power(pNT, 2) + 2 * M * ppL +
+          2 * pmuL * ppL + Power(ppL, 2) - 2 * Ep * (M + pmuL + ppL) -
+          2 * Emu * (-Ep + M + pmuL + ppL)) /
+         (Emu + Ep - M - pmuL - ppL);
+}
+
+double get_factor_pdv(TLorentzVector pmu, TLorentzVector p_hadron) {
+  const double M = nuclearMass(12, 6);
+  const double M1 = nuclearMassStar(12, 6);
+  const double Emu = pmu.E();
+  const double Ep = p_hadron.E();
+  const double pmuL = pmu.Pz();
+  const double ppL = p_hadron.Pz();
+  const double pmuT = pmu.Pt();
+  const double ppT = p_hadron.Pt();
+  const auto p = pmu + p_hadron;
+  const double pNT = p.Pt();
+  return -M1 / (Emu + Ep - M - pmuL - ppL);
 }

@@ -1,7 +1,6 @@
 #include "dochi2.h"
 
-const double unit = 1e-39;
-double chi2(const TMatrixD &cov, const TH1D &data, const TH1D &mc) {
+double chi2(const TMatrixD &cov, const TH1D &data, const TH1D &mc, double unit) {
   int dimension = cov.GetNrows();
 
   TMatrixD diff_matrix{};

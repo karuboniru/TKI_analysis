@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(MyProject)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+set(CMAKE_CXX_STANDARD 23)
+# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 add_link_options(-Wl,--as-needed)
 
 # Locate CERN ROOT
@@ -51,4 +51,50 @@ target_link_libraries(MINERvA_pi0 PRIVATE
   ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
   EVENT1
   analysis
+)
+
+add_executable(MINERvA_0pi MINERvA_0pi.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(MINERvA_0pi PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
+  EVENT1
+  analysis
+)
+
+
+add_executable(rawtheta rawtheta.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(rawtheta PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
+  EVENT1
+  analysis
+)
+
+add_executable(MINERvA_all MINERvA_all.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(MINERvA_all PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
+  EVENT1
+  analysis
+)
+
+
+add_executable(MINERvA_all_gibuu MINERvA_all_gibuu.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(MINERvA_all_gibuu PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
+  EVENT1
+  analysis
+)
+
+
+add_executable(gibuu2root gibuu2root.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(gibuu2root PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
 )

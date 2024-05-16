@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
   auto action =
       d_TKICut.Snapshot("tree", "output.root",
                         {"TKIVars", "weight", "targetA", "targetZ",
-                         "neutrino_p", "muon_p", "full_hadron", "TKIEvent"},
+                         "neutrino_p", "muon_p", "full_hadron"},
                         opts);
 
   const double T2K_pi0_IApN_bin_edges[] = {0, 0.12, 0.24, 0.6, 1.5};

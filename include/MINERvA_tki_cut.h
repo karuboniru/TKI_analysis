@@ -9,6 +9,13 @@
 
 class TKIEvent;
 
-TLorentzVector get_full_hadron_MINERvAPi0(const TKIEvent &e);
+// TLorentzVector get_full_hadron_MINERvAPi0(const TKIEvent &e);
+// TLorentzVector get_full_hadron_MINERvA0PI(const TKIEvent &e);
 
 ROOT::RDF::RNode DoTKICut_MINERvA(ROOT::RDF::RNode df) ;
+ROOT::RDF::RNode DoTKICut_MINERvA0PI(ROOT::RDF::RNode df) ;
+
+
+
+ROOT::RDF::RNode CommonVariableDefine(ROOT::RDF::RNode df);
+ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df);
