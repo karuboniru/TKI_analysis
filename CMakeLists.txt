@@ -98,3 +98,32 @@ add_executable(gibuu2root gibuu2root.cpp)
 target_link_libraries(gibuu2root PRIVATE 
   ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
 )
+
+
+add_executable(rawq2 rawq2.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(rawq2 PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
+  EVENT1
+  analysis
+)
+
+add_executable(rawq2_gibuu rawq2_gibuu.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(rawq2_gibuu PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
+  EVENT1
+  analysis
+)
+
+
+add_executable(minerva_all_gibuu_plot minerva_all_gibuu_plot.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(minerva_all_gibuu_plot PRIVATE 
+  ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
+  EVENT1
+  analysis
+)

@@ -267,6 +267,10 @@ int main(int argc, char *argv[]) {
       std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
     }
     {
+      auto plots_new = make_plots_pi0(df_in, "dpL", plottag);
+      std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
+    }
+    {
       auto plots_dat = make_plots_pi0(df_in, "dalphat", plottag);
       std::move(plots_dat.begin(), plots_dat.end(), std::back_inserter(plots));
     }
@@ -278,12 +282,22 @@ int main(int argc, char *argv[]) {
       auto plot_2d = make_2D_plots(df_in, "2D" + plottag);
       std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
     }
+    {
+      auto plot_2d = make_2D_plots(
+          df_in.Filter([](event &e) { return e.flag.mec; }, {"e"}),
+          "2DMEC" + plottag);
+      std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
+    }
   };
 
   auto plot_0pi = [&count, &plots](ROOT::RDF::RNode df_in,
                                    std::string plottag) {
     {
       auto plots_new = make_plots_0pi(df_in, "dtl", plottag);
+      std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
+    }
+    {
+      auto plots_new = make_plots_0pi(df_in, "dpL", plottag);
       std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
     }
     {
@@ -296,6 +310,12 @@ int main(int argc, char *argv[]) {
     }
     {
       auto plot_2d = make_2D_plots(df_in, "2D" + plottag);
+      std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
+    }
+    {
+      auto plot_2d = make_2D_plots(
+          df_in.Filter([](event &e) { return e.flag.mec; }, {"e"}),
+          "2DMEC" + plottag);
       std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
     }
   };
