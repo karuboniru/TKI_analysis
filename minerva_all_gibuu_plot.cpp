@@ -9,87 +9,71 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RResultPtr.hxx>
+#include <THStack.h>
+#include <TLegend.h>
 #include <TLorentzVector.h>
 #include <TMatrixDfwd.h>
+#include <TPad.h>
 #include <TStyle.h>
 #include <TSystem.h>
 #include <TVector3.h>
 
-#include <filesystem>
+#include <cmath>
+#include <functional>
 #include <memory>
+#include <ranges>
+#include <sstream>
 #include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 
-auto get_IApN_hist_pi0() {
-  std::array<double, 13> bin_edges{
-      0.0000,   55.0000,  110.0000, 165.0000, 220.0000, 275.0000, 330.0000,
-      385.0000, 440.0000, 495.0000, 560.0000, 655.0000, 810.0000};
-  for (auto &&i : bin_edges) {
-    i /= 1000.;
+#include "expdata.h"
+
+using plot_ptr_t =
+    std::variant<TH1 *, TLegend *, THStack *, ROOT::RDF::RResultPtr<TH1D>,
+                 ROOT::RDF::RResultPtr<TH1>>;
+
+// this is general channel definition
+const std::vector<std::tuple<std::string, std::function<bool(int)>>>
+    list_name_id{{"QEL", [](int id) { return id == 1; }},
+                 {"RES", [](int id) { return id >= 2 && id <= 33; }},
+                 {"DIS", [](int id) { return id == 34; }},
+                 {"MEC", [](int id) { return id == 35; }},
+                 {"2PIBG", [](int id) { return id == 37; }}};
+
+// pion count definition for pi0 channel
+const std::vector<std::tuple<std::string, std::function<bool(size_t)>>>
+    list_pion_cut{{"1pi0", [](size_t i) { return i == 1; }},
+                  {"Mpi0", [](size_t i) { return i > 1; }}};
+
+std::string pion_pretty_name(std::string s) {
+  if (s == "1pi0") {
+    return "1 #pi^{0}";
   }
-  // 10$^{-42}$ cm$^2$/MeV/c/nucleon
-  // to 10$^{-38}$ cm$^2$/GeV/c/nucleon
-  // factor: 10^4 / 10^3 = 10
-  std::array<double, 12> exp_value{0.6, 1.3, 2.1, 2.8, 1.4, 1.2,
-                                   1.1, 1.2, 1.3, 1.2, 0.8, 0.7};
-
-  TH1D data("data", "", 12, bin_edges.data());
-
-  for (size_t i = 0; i < 12; i++) {
-    data.SetBinContent(i + 1, exp_value[i] / 10.);
+  if (s == "Mpi0") {
+    return "multi- #pi^{0}";
   }
-
-  return data;
-}
-
-double do_chi2_IApN_pi0(TH1 *hist) {
-  auto data = get_IApN_hist_pi0();
-  // unit: 10$^{-47}$ cm$^2$/MeV/c/nucleon
-  // to: 10$^{-38}$ cm$^2$/GeV/c/nucleon
-  // scale: 10^9 / 10e3 = 10^6
-  const double matrix_element_decomp[12][12]{
-      {12714, 16637, 7407, 2005, 1829, 1418, -822, -2963, -1775, -2892, -3822,
-       -6706},
-      {0, 15026, 18731, 13567, 1839, 781, -455, -1971, -366, -4464, -2025,
-       -6245},
-      {0, 0, 21091, 31461, 10158, 4100, 2114, 1556, 667, -1750, -2939, -635},
-      {0, 0, 0, 25067, 18613, 10259, 5284, 949, 1992, 4051, 4716, -4554},
-      {0, 0, 0, 0, 17620, 17591, 8716, 1303, 1944, -1240, -1948, -5097},
-      {0, 0, 0, 0, 0, 16880, 21777, 17320, 4843, 184, 1668, 5120},
-      {0, 0, 0, 0, 0, 0, 16465, 15579, 13441, 7898, 6227, -1467},
-      {0, 0, 0, 0, 0, 0, 0, 18517, 19628, 13906, 4144, 5067},
-      {0, 0, 0, 0, 0, 0, 0, 0, 26267, 16989, 8748, -1683},
-      {0, 0, 0, 0, 0, 0, 0, 0, 0, 25355, 21168, 14467},
-      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18649, 7763},
-      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25157}};
-
-  TMatrixD cov_matrix_decomp(12, 12, &matrix_element_decomp[0][0]);
-
-  TMatrixD cov_matrix_transpose(cov_matrix_decomp);
-  cov_matrix_transpose.T();
-
-  auto cov_matrix = cov_matrix_transpose * cov_matrix_decomp;
-  cov_matrix *= 1e-12;
-  for (size_t i{}; i < 12; i++) {
-    std::cout << i << " th: " << cov_matrix[i][i] << " ";
-  }
-  std::cout << std::endl;
-  return chi2(cov_matrix, data, *((TH1D *)hist), 1e-6);
+  return s;
 }
 
 struct plot_data {
   int bins;
   double xmin, xmax;
   std::string name;
+  std::string ytitle;
 };
 
 plot_data get_info(std::string varname) {
   if (varname == "dalphat") {
-    return plot_data{30, 0., 180., "#delta#alpha_{T}"};
+    return plot_data{
+        30, 0., 180., "#delta#alpha_{T}",
+        "d#sigma/d#delta#alpha_{T} (#times 10^{-38} cm^{2}/degree/nucleon)"};
   }
   if (varname == "IApN") {
-    return plot_data{30, 0., 0.8, "p_{N}"};
+    return plot_data{
+        30, 0., 0.8, "p_{N}",
+        "d#sigma/d#it{p}_{N} (#times 10^{-38} cm^{2}/GeV/#it{c}/nucleon)"};
   }
   if (varname == "dpL") {
     return plot_data{30, -1., 1., "#delta p_{L}"};
@@ -103,167 +87,213 @@ plot_data get_info(std::string varname) {
   if (varname == "dtl") {
     return plot_data{30, -1., 1., "cos #delta#alpha_{L}"};
   }
+  if (varname == "Q2") {
+    return plot_data{50, 0., 5., "Q^{2} (GeV^{2})",
+                     "d#sigma/dQ^{2} (#times 10^{-38} cm^{2}/GeV^2/nucleon)"};
+  }
+  if (varname == "xBj") {
+    return plot_data{50, 0., 2.0, "x_{Bj}",
+                     "d#sigma/dx_{Bj} (#times 10^{-38} cm^{2}/nucleon)"};
+  }
+  if (varname == "W") {
+    return plot_data{60, 0.8, 4.0, "W (GeV)",
+                     "d#sigma/dW (#times 10^{-38} cm^{2}/GeV/nucleon)"};
+  }
   throw std::runtime_error("Unknown variable name");
 }
 
-template <typename T>
-std::vector<ROOT::RDF::RResultPtr<TH1>>
-make_plots_pi0(T &&df_in, std::string variable = "dtl",
-               std::string prefix = "") {
+template <typename T, size_t N>
+ROOT::RDF::RResultPtr<TH1> make_plots(T &&df_in, std::array<double, N> bins,
+                                      std::string variable,
+                                      std::string postfix = "") {
   auto plot_data = get_info(variable);
-  auto muon_cut = df_in.Filter(
-      [](const TLorentzVector &muon) {
-        return muon.P() > 1.5 && muon.P() < 20.0 &&
-               muon.Theta() < 25 * M_PI / 180;
-      },
-      {"muon_p"});
-  auto proton_momentum_min_cut = muon_cut.Filter(
-      [](const TLorentzVector &pproton) { return pproton.P() > 0.45; },
-      {"leading_proton"});
-  auto make_plot = [&](auto &&df_in, std::string plot_name) {
-    auto h =
-        df_in.template Histo1D<double>({plot_name.c_str(), plot_name.c_str(),
-                                        200, plot_data.xmin, plot_data.xmax},
-                                       variable, "weight");
-    return h;
-  };
-  std::vector<ROOT::RDF::RResultPtr<TH1>> plots{};
-  plots.emplace_back(make_plot(df_in, prefix + variable + "_nocut"));
-  plots.emplace_back(make_plot(muon_cut, prefix + variable + "_muon_cut"));
-  plots.emplace_back(make_plot(proton_momentum_min_cut,
-                               prefix + variable + "_proton_momentum_min_cut"));
-  if (variable == "IApN") {
-    auto exphist = get_IApN_hist_pi0();
-    exphist.SetName("expbin_IApN_pi0");
-    plots.emplace_back(proton_momentum_min_cut.template Histo1D<double>(
-        exphist, "IApN", "weight"));
-  }
-  return plots;
+  auto plot_name = postfix.empty() ? variable : (variable + "_" + postfix);
+  return df_in.template Histo1D<double>(
+      {plot_name.c_str(), variable.c_str(), bins.size() - 1, bins.data()},
+      variable, "weight");
 }
 
 template <typename T>
-std::vector<ROOT::RDF::RResultPtr<TH1>>
-make_plots_0pi(T &&df_in, std::string variable = "dtl",
-               std::string prefix = "") {
+ROOT::RDF::RResultPtr<TH1> make_plots(T &&df_in, std::string variable,
+                                      std::string postfix = "") {
   auto plot_data = get_info(variable);
-  auto muon_cut = df_in.Filter(
-      [](const TLorentzVector &muon) {
-        return muon.P() > 1.5 && muon.P() < 10.0 &&
-               muon.Theta() < 20 * M_PI / 180;
-      },
-      {"muon_p"});
-  auto proton_momentum_min_cut = muon_cut.Filter(
-      [](const TLorentzVector &pproton) { return pproton.P() > 0.45; },
-      {"full_hadron"});
-  auto proton_momentum_min_max_cut = proton_momentum_min_cut.Filter(
-      [](const TLorentzVector &pproton) { return pproton.P() < 1.2; },
-      {"full_hadron"});
-  auto proton_momentum_min_cut_theta_cut = proton_momentum_min_max_cut.Filter(
-      [](const TLorentzVector &pproton) {
-        return pproton.Theta() < 70 * M_PI / 180;
-      },
-      {"full_hadron"});
-  auto make_DTL_plot = [&](auto &&df_in, std::string plot_name) {
-    auto h =
-        df_in.template Histo1D<double>({plot_name.c_str(), plot_name.c_str(),
-                                        200, plot_data.xmin, plot_data.xmax},
-                                       variable, "weight");
-    return h;
-  };
-  std::vector<ROOT::RDF::RResultPtr<TH1>> plots{};
-  plots.emplace_back(make_DTL_plot(df_in, prefix + variable + "_nocut"));
-  plots.emplace_back(make_DTL_plot(muon_cut, prefix + variable + "_muon_cut"));
-  plots.emplace_back(make_DTL_plot(
-      proton_momentum_min_cut, prefix + variable + "_proton_momentum_min_cut"));
-  plots.emplace_back(
-      make_DTL_plot(proton_momentum_min_max_cut,
-                    prefix + variable + "_proton_momentum_min_max_cut"));
-  plots.emplace_back(
-      make_DTL_plot(proton_momentum_min_cut_theta_cut,
-                    prefix + variable + "_proton_momentum_min_cut_theta_cut"));
-  return plots;
+  auto plot_name = postfix.empty() ? variable : (variable + "_" + postfix);
+  return df_in.template Histo1D<double>({plot_name.c_str(), variable.c_str(),
+                                         plot_data.bins, plot_data.xmin,
+                                         plot_data.xmax},
+                                        variable, "weight");
 }
 
-std::vector<ROOT::RDF::RResultPtr<TH1>> make_2D_plots(ROOT::RDF::RNode df_in,
-                                                      std::string prefix = "") {
-  const std::array<std::string, 5> vars{"p_theta", "dalphat", "IApN", "dpL",
-                                        "dtl"};
-  std::vector<ROOT::RDF::RResultPtr<TH1>> plots{};
-  for (size_t i{}; i < vars.size(); i++) {
-    for (size_t j{i + 1}; j < vars.size(); j++) {
-      auto var1 = vars[i];
-      auto var2 = vars[j];
-      auto info1 = get_info(var1);
-      auto info2 = get_info(var2);
-      auto h = df_in.Histo2D<double, double>(
-          {(prefix + var1 + "_" + var2).c_str(),
-           (prefix + ";" + info1.name + ";" + info2.name).c_str(), info1.bins,
-           info1.xmin, info1.xmax, info2.bins, info2.xmin, info2.xmax},
-          var1.c_str(), var2.c_str(), "weight");
-      plots.emplace_back(h);
-    }
-  }
-  return plots;
+template <typename T, size_t N = 0>
+auto plot_channels_0pi(
+    T &&df_in, std::string variable,
+    std::optional<std::array<double, N>> bins = std::nullopt) {
+  return list_name_id |
+         std::views::transform(
+             [&](std::tuple<std::string, std::function<bool(int)>> name_id) {
+               auto &[name, id] = name_id;
+               if constexpr (N != 0)
+                 return std::make_tuple(
+                     name, make_plots(df_in.Filter(id, {"channel"}),
+                                      bins.value(), variable, name + "_0pi"));
+               else
+                 return std::make_tuple(
+                     name, make_plots(df_in.Filter(id, {"channel"}), variable,
+                                      name + "_0pi"));
+             }) |
+         std::ranges::to<std::vector>();
 }
 
-void plot_and_save_2d(TH2 *plot, std::string path_prefix = "2dplots_all/") {
-  thread_local style::global_style style{};
+template <typename T, size_t N = 0>
+auto plot_channels_pi0(
+    T &&df_in, std::string variable,
+    std::optional<std::array<double, N>> bins = std::nullopt) {
+  return std::views::cartesian_product(list_name_id, list_pion_cut) |
+         std::views::transform([&](auto &&tup) {
+           auto &&[name_id, pion_cut] = tup;
+           auto &&[name, id] = name_id;
+           auto &&[pion_name, cut] = pion_cut;
+           if constexpr (N != 0)
+             return std::make_tuple(
+                 name + " " + pion_pretty_name(pion_name),
+                 make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
+                            bins.value(), variable, name + "_" + pion_name));
+           else
+             return std::make_tuple(
+                 name + " " + pion_pretty_name(pion_name),
+                 make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
+                            variable, name + "_" + pion_name));
+         }) |
+         std::ranges::to<std::vector>();
+}
 
-  auto path_dir = std::filesystem::path(path_prefix + "test");
-  auto dirname = path_dir.parent_path();
-  if (!std::filesystem::exists(dirname)) {
-    std::filesystem::create_directories(dirname);
+constexpr std::array<int, 10> col{kRed,   kBlue, kViolet, kYellow, kOrange,
+                                  kGreen, kGray, kTeal,   kPink};
+std::tuple<THStack, TLegend> build_stack_from_list(
+    std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>>> list,
+    double threshold) {
+  std::tuple<THStack, TLegend> tup;
+  auto &&[stack, legend] = tup;
+  size_t skipped = 0;
+  for (auto &&[id, plot_entry] : list | std::views::enumerate) {
+    auto &&[name, plot] = plot_entry;
+    plot->SetLineColor(col[id - skipped]);
+    plot->SetFillColor(col[id - skipped]);
+    plot->SetFillStyle(1001);
+
+    stack.Add(plot.GetPtr());
+    if (plot->Integral("WIDTH") > threshold)
+      legend.AddEntry(plot.GetPtr(), name.c_str(), "f");
+    else
+      skipped++;
   }
-  auto canvas = getCanvas();
-  ResetStyle(plot);
-  // plot->SetMarkerSize(2.5);
-  plot->Draw("colz");
-  canvas->Print((path_prefix + plot->GetName() + ".pdf").c_str());
-  canvas->Print((path_prefix + plot->GetName() + ".svg").c_str());
-  canvas->Print((path_prefix + plot->GetName() + ".eps").c_str());
+  return tup;
+}
+
+void do_plot(std::vector<plot_ptr_t> plot_ptrs_list, std::string filename,
+             std::string_view ytitle, std::string_view xtitle,
+             std::array<double, 4> legend_pos, double xmax = 0.,
+             std::string legend_head = "", std::string histopt = "HISTC") {
+  auto c = getCanvas();
+  PadSetup(c.get());
+  for (auto [id, obj] : plot_ptrs_list | std::views::enumerate) {
+    // std::string hist_draw_opt = id == 0 ? "E0 X1" : "HISTC same";
+    std::string hist_draw_opt = id == 0 ? histopt : (histopt + " same");
+    std::visit(
+        [&](auto &&arg) {
+          if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, TH1 *> ||
+                        std::is_same_v<std::decay_t<decltype(arg)>,
+                                       ROOT::RDF::RResultPtr<TH1>>) {
+            ResetStyle(arg);
+            arg->SetStats(0);
+            arg->GetXaxis()->SetTitle(xtitle.data());
+            arg->GetYaxis()->SetTitle(ytitle.data());
+            arg->SetMinimum(0);
+            if (xmax > 0.) {
+              arg->GetXaxis()->SetRangeUser(0., xmax);
+            }
+            if (id == 0) {
+              arg->SetFillColor(kBlack);
+              arg->SetLineColor(kBlack);
+              arg->SetLineWidth(2);
+              arg->SetMarkerStyle(20);
+            }
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, TH1 *>)
+              arg->Draw("E0 X1");
+            else
+              arg->Draw(hist_draw_opt.c_str());
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                              TLegend *>) {
+            ResetStyle(arg);
+            arg->SetX1(legend_pos[0]);
+            arg->SetY1(legend_pos[1]);
+            arg->SetX2(legend_pos[2]);
+            arg->SetY2(legend_pos[3]);
+            if (std::holds_alternative<TH1 *>(plot_ptrs_list[0])) {
+              auto datahist = std::get<TH1 *>(plot_ptrs_list[0]);
+              arg->AddEntry(datahist, datahist->GetTitle(), "lep");
+            }
+            if (!legend_head.empty()) {
+              arg->SetHeader(legend_head.data());
+            }
+            arg->Draw();
+          } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                              THStack *>) {
+            if (id == 0) {
+              auto last = dynamic_cast<TH1 *>(arg->GetStack()->Last());
+              ResetStyle(last);
+              last->GetXaxis()->SetTitle(xtitle.data());
+              last->GetYaxis()->SetTitle(ytitle.data());
+              last->Draw(hist_draw_opt.c_str());
+            }
+            arg->Draw(("same " + hist_draw_opt).c_str());
+          }
+        },
+        obj);
+  }
+  std::visit([&](auto &&obj) { obj->Draw("E0 X1 SAME"); }, plot_ptrs_list[0]);
+  c->SaveAs((filename + ".pdf").c_str());
+  c->SaveAs((filename + ".eps").c_str());
+  c->SaveAs((filename + ".svg").c_str());
 }
 
 int main(int argc, char *argv[]) {
-  gSystem->ResetSignal(kSigBus);
-  gSystem->ResetSignal(kSigSegmentationViolation);
-  gSystem->ResetSignal(kSigIllegalInstruction);
   TH1::AddDirectory(false);
   ROOT::EnableImplicitMT();
   std::vector<std::string> files{};
-  size_t nruns{};
+  size_t n_runs{};
   for (int i = 1; i < argc; i++) {
     files.push_back(argv[i]);
-    nruns++;
+    n_runs++;
   }
   ROOT::RDataFrame input("out_tree", files);
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
   ROOT::RDF::Experimental::AddProgressBar(input);
 #endif
   auto d = TrackerPrepare(input);
-  // auto d_nofsi = NuWroPrepare(input, false);
-  d.Snapshot("test", "test.root", {"InitNucleon", "InitNeutrino", "weight"});
   auto count = input.Count();
+  auto channel_merged = d.Aggregate(
+      [](std::set<int> &c_set, int channel) { c_set.insert(channel); },
+      [](std::set<int> c_set1, const std::set<int> c_set2) {
+        c_set1.insert(c_set2.begin(), c_set2.end());
+        return c_set1;
+      },
+      "channel", std::set<int>{});
 
   auto doTKI_pi0 = [](ROOT::RDF::RNode d) {
     return CommonVariableDefine(DoTKICut_MINERvA(d))
+        .Define("npi0",
+                [](ROOT::RVec<TLorentzVector> &pions) { return pions.size(); },
+                {"good_pion"})
         .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
                 {"TKIVars"})
         .Define("realpL",
-                [](TLorentzVector InitNucleon) {
-                  // return e.in[1].p4();
-                  // auto p4 = e.in[1].p4();
-                  // return p4.z;
-                  return InitNucleon.Z();
-                },
+                [](TLorentzVector InitNucleon) { return InitNucleon.Z(); },
                 {"InitNucleon"})
-        .Define("realpn",
-                [](TLorentzVector InitNucleon) {
-                  // return e.in[1].p4();
-                  // auto p4 = e.in[1].p4();
-                  // return TVector3{p4.x, p4.y, p4.z}.CosTheta();
-                  return InitNucleon.CosTheta();
-                },
-                {"InitNucleon"})
+        .Define(
+            "realpn",
+            [](TLorentzVector InitNucleon) { return InitNucleon.CosTheta(); },
+            {"InitNucleon"})
         .Define("p_cos_theta",
                 [](const TLorentzVector &full_hadron) {
                   return full_hadron.CosTheta();
@@ -285,21 +315,12 @@ int main(int argc, char *argv[]) {
         .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
                 {"TKIVars"})
         .Define("realpL",
-                [](TLorentzVector InitNucleon) {
-                  // return e.in[1].p4();
-                  // auto p4 = e.in[1].p4();
-                  // return p4.z;
-                  return InitNucleon.Z();
-                },
+                [](TLorentzVector InitNucleon) { return InitNucleon.Z(); },
                 {"InitNucleon"})
-        .Define("realpn",
-                [](TLorentzVector InitNucleon) {
-                  // return e.in[1].p4();
-                  // auto p4 = e.in[1].p4();
-                  // return TVector3{p4.x, p4.y, p4.z}.CosTheta();
-                  return InitNucleon.CosTheta();
-                },
-                {"InitNucleon"})
+        .Define(
+            "realpn",
+            [](TLorentzVector InitNucleon) { return InitNucleon.CosTheta(); },
+            {"InitNucleon"})
         .Define("p_cos_theta",
                 [](const TLorentzVector &full_hadron) {
                   return full_hadron.CosTheta();
@@ -316,104 +337,189 @@ int main(int argc, char *argv[]) {
         .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"});
   };
 
-  std::vector<ROOT::RDF::RResultPtr<TH1>> plots{};
+  auto rdf_pi0_after_cut = doTKI_pi0(d);
 
-  auto plot_pi0 = [&count, &plots](ROOT::RDF::RNode df_in,
-                                   std::string plottag) {
-    {
-      auto plots_new = make_plots_pi0(df_in, "dtl", plottag);
-      std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
-    }
-    {
-      auto plots_new = make_plots_pi0(df_in, "dpL", plottag);
-      std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
-    }
-    {
-      auto plots_dat = make_plots_pi0(df_in, "dalphat", plottag);
-      std::move(plots_dat.begin(), plots_dat.end(), std::back_inserter(plots));
-    }
-    {
-      auto plots_pn = make_plots_pi0(df_in, "IApN", plottag);
-      std::move(plots_pn.begin(), plots_pn.end(), std::back_inserter(plots));
-    }
-    {
-      auto plot_2d = make_2D_plots(df_in, "2D" + plottag);
-      std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
-    }
-    {
-      auto plot_2d = make_2D_plots(
-          df_in.Filter("channel == 35 || channel == 36"), "2DMEC" + plottag);
-      std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
+  auto rdf_0pi_after_cut = doTKI_0pi(d);
+
+  std::list<ROOT::RDF::RResultPtr<TH1>> plots{};
+
+  // plots for full data
+  auto pred_all_IApN_pi0 = plots.emplace_back(
+      make_plots(rdf_pi0_after_cut, get_binning_IApN_pi0(), "IApN", "pi0"));
+  auto pred_all_IApN_0pi = plots.emplace_back(
+      make_plots(rdf_0pi_after_cut, get_binning_IApN_0pi(), "IApN", "0pi"));
+  auto pred_all_dalphat_pi0 = plots.emplace_back(make_plots(
+      rdf_pi0_after_cut, get_binning_dalphat_pi0(), "dalphat", "pi0"));
+  auto pred_all_dalphat_0pi = plots.emplace_back(make_plots(
+      rdf_0pi_after_cut, get_binning_dalphat_0pi(), "dalphat", "0pi"));
+
+  // per channel stacked plots
+  // pn 0pi
+  auto plots_0pi_IApN = plot_channels_0pi(
+      rdf_0pi_after_cut, "IApN", std::make_optional(get_binning_IApN_0pi()));
+
+  // dat 0pi
+  auto plots_0pi_dalphat =
+      plot_channels_0pi(rdf_0pi_after_cut, "dalphat",
+                        std::make_optional(get_binning_dalphat_0pi()));
+
+  // pn pi0
+  auto plots_pi0_IApN = plot_channels_pi0(
+      rdf_pi0_after_cut, "IApN", std::optional(get_binning_IApN_pi0()));
+
+  // dat pi0
+  auto plots_pi0_dalphat =
+      plot_channels_pi0(rdf_pi0_after_cut, "dalphat",
+                        std::make_optional(get_binning_dalphat_pi0()));
+
+  // auto plots_pi0_W = get_channel_list_pi0(rdf_pi0_after_cut, "W");
+  std::list<std::string> vars{"W", "Q2", "xBj"};
+  auto var_plots_0pi = vars | std::views::transform([&](std::string name) {
+                         return plot_channels_0pi(rdf_0pi_after_cut, name);
+                       }) |
+                       std::ranges::to<std::vector>();
+  auto var_plots_pi0 = vars | std::views::transform([&](std::string name) {
+                         return plot_channels_pi0(rdf_pi0_after_cut, name);
+                       }) |
+                       std::ranges::to<std::vector>();
+  auto add_to_plots_vars = [&](auto &&list) {
+    for (auto &&list_entry : list) {
+      for (auto &&[name, plot] : list_entry) {
+        plots.emplace_back(plot);
+      }
     }
   };
+  add_to_plots_vars(var_plots_0pi);
+  add_to_plots_vars(var_plots_pi0);
 
-  auto plot_0pi = [&count, &plots](ROOT::RDF::RNode df_in,
-                                   std::string plottag) {
-    {
-      auto plots_new = make_plots_0pi(df_in, "dtl", plottag);
-      std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
-    }
-    {
-      auto plots_new = make_plots_0pi(df_in, "dpL", plottag);
-      std::move(plots_new.begin(), plots_new.end(), std::back_inserter(plots));
-    }
-    {
-      auto plots_dat = make_plots_0pi(df_in, "dalphat", plottag);
-      std::move(plots_dat.begin(), plots_dat.end(), std::back_inserter(plots));
-    }
-    {
-      auto plots_pn = make_plots_0pi(df_in, "IApN", plottag);
-      std::move(plots_pn.begin(), plots_pn.end(), std::back_inserter(plots));
-    }
-    {
-      auto plot_2d = make_2D_plots(df_in, "2D" + plottag);
-      std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
-    }
-    {
-      auto plot_2d = make_2D_plots(
-          df_in.Filter("channel == 35 || channel == 36"), "2DMEC" + plottag);
-      std::move(plot_2d.begin(), plot_2d.end(), std::back_inserter(plots));
+  auto add_to_plots = [&](auto &&list) {
+    for (auto &&[name, plot] : list) {
+      plots.emplace_back(plot);
     }
   };
-  auto df_pi0 = doTKI_pi0(d);
-  auto df_0pi = doTKI_0pi(d);
-  auto df_pi0_report = df_pi0.Report();
-  auto df_0pi_report = df_0pi.Report();
+  add_to_plots(plots_0pi_IApN);
+  add_to_plots(plots_0pi_dalphat);
+  add_to_plots(plots_pi0_IApN);
+  add_to_plots(plots_pi0_dalphat);
 
-  ROOT::RDF::RSnapshotOptions opts;
-  opts.fMode = "RECREATE";
-  opts.fLazy = true;
-
-  plot_pi0(df_pi0, "pi0_fsi");
-  plot_0pi(df_0pi, "0pi_fsi");
+  auto df_pi0_report = rdf_pi0_after_cut.Report();
+  auto df_0pi_report = rdf_0pi_after_cut.Report();
 
   auto file = std::make_unique<TFile>("dtl_all.root", "RECREATE");
   for (auto &&plot : plots) {
-    plot->Scale((12. / 13.) / nruns / 10, "width");
+    plot->Scale((12. / 13.) / n_runs / 10, "width");
     file->Add(plot.GetPtr());
-    auto ptr = dynamic_cast<TH2D *>(plot.GetPtr());
-    if (ptr) {
-      auto normalize_x = normalize_slice(ptr, true);
-      auto normalize_y = normalize_slice(ptr, false);
-      normalize_x->SetMinimum(0.);
-      normalize_y->SetMinimum(0.);
-      file->Add(normalize_x);
-      file->Add(normalize_y);
-      plot_and_save_2d(ptr);
-      plot_and_save_2d(normalize_x);
-      plot_and_save_2d(normalize_y);
-    }
-    if (std::string_view{plot.GetPtr()->GetName()} == "expbin_IApN_pi0") {
-      std::cout << "Chi2: " << do_chi2_IApN_pi0(plot.GetPtr()) << std::endl;
-    }
   }
+
+  constexpr double threshold_frac = 1e-2;
+  auto xsecint_0pi = pred_all_dalphat_0pi->Integral("WIDTH");
+  auto xsecint_pi0 = pred_all_dalphat_pi0->Integral("WIDTH");
+  auto [plots_0pi_IApN_stack, plots_0pi_IApN_leg] = build_stack_from_list(
+      plots_0pi_IApN, pred_all_IApN_0pi->Integral("WIDTH") * threshold_frac);
+  auto [plots_0pi_dalphat_stack, plots_0pi_dalphat_leg] = build_stack_from_list(
+      plots_0pi_dalphat,
+      pred_all_dalphat_0pi->Integral("WIDTH") * threshold_frac);
+  auto [plots_pi0_IApN_stack, plots_pi0_IApN_leg] = build_stack_from_list(
+      plots_pi0_IApN, pred_all_IApN_pi0->Integral("WIDTH") * threshold_frac);
+  auto [plots_pi0_dalphat_stack, plots_pi0_dalphat_leg] = build_stack_from_list(
+      plots_pi0_dalphat,
+      pred_all_dalphat_pi0->Integral("WIDTH") * threshold_frac);
+
+  auto stacked_vars_0pi =
+      var_plots_0pi | std::views::transform([&](auto &&list) {
+        return build_stack_from_list(list, xsecint_0pi * threshold_frac);
+      }) |
+      std::ranges::to<std::vector>();
+  auto stacked_vars_pi0 =
+      var_plots_pi0 | std::views::transform([&](auto &&list) {
+        return build_stack_from_list(list, xsecint_pi0 * threshold_frac);
+      }) |
+      std::ranges::to<std::vector>();
+  
+  auto exp_data_hist_IApN_pi0 = get_IApN_hist_pi0();
+  auto exp_data_hist_IApN_0pi = get_IApN_hist_0pi();
+  auto exp_data_hist_dalphat_pi0 = get_dalphat_hist_pi0();
+  auto exp_data_hist_dalphat_0pi = get_dalphat_hist_0pi();
+
+  file->Add(&exp_data_hist_IApN_pi0);
+  file->Add(&exp_data_hist_IApN_0pi);
+  file->Add(&exp_data_hist_dalphat_pi0);
+  file->Add(&exp_data_hist_dalphat_0pi);
+
+  auto chi2_IApN_pi0 = do_chi2_IApN_pi0(pred_all_IApN_pi0.GetPtr());
+  auto chi2_IApN_0pi = do_chi2_IApN_0pi(pred_all_IApN_0pi.GetPtr());
+  auto chi2_dalphat_pi0 = do_chi2_dalphat_pi0(pred_all_dalphat_pi0.GetPtr());
+  auto chi2_dalphat_0pi = do_chi2_dalphat_0pi(pred_all_dalphat_0pi.GetPtr());
+
+  std::cout << "chi2_IApN_pi0 " << chi2_IApN_pi0 << std::endl;
+  std::cout << "chi2_IApN_0pi " << chi2_IApN_0pi << std::endl;
+  std::cout << "chi2_dalphat_pi0 " << chi2_dalphat_pi0 << std::endl;
+  std::cout << "chi2_dalphat_0pi " << chi2_dalphat_0pi << std::endl;
+
+  auto form_legend = [](TH1 *hist, double chi2) -> std::string {
+    // return std::string{"GiBUU"} + " #chi^{2}/NDF = " + std::to_string(chi2);
+    std::stringstream ss;
+    ss << "GiBUU "
+       << " #chi^{2}/NDF = " << round(chi2) << " / " << hist->GetNbinsX();
+    return ss.str();
+  };
+  const std::string pn_ytitle =
+      "d#sigma/d#it{p}_{N} (#times 10^{-38} cm^{2}/GeV/#it{c}/nucleon)";
+  const std::string dalphat_ytitle =
+      "d#sigma/d#delta#alpha_{T} (#times 10^{-38} cm^{2}/degree/nucleon)";
+
+  // first entry always data, then anything else
+  do_plot({&exp_data_hist_IApN_pi0, pred_all_IApN_pi0, &plots_pi0_IApN_stack,
+           &plots_pi0_IApN_leg},
+          "IApN_pi0", pn_ytitle, "p_{N}", {0.6, 0.55, 0.9, 0.9}, 0.8,
+          form_legend(&exp_data_hist_IApN_pi0, chi2_IApN_pi0));
+
+  do_plot({&exp_data_hist_IApN_0pi, pred_all_IApN_0pi, &plots_0pi_IApN_stack,
+           &plots_0pi_IApN_leg},
+          "IApN_0pi", pn_ytitle, "p_{N}", {0.6, 0.6, 0.9, 0.9}, 0.8,
+          form_legend(&exp_data_hist_IApN_0pi, chi2_IApN_0pi));
+
+  do_plot({&exp_data_hist_dalphat_pi0, pred_all_dalphat_pi0,
+           &plots_pi0_dalphat_stack, &plots_pi0_dalphat_leg},
+          "dalphat_pi0", dalphat_ytitle, "#delta#alpha_{T}",
+          {0.2, 0.5, 0.5, 0.9}, 0.,
+          form_legend(&exp_data_hist_dalphat_pi0, chi2_dalphat_pi0));
+
+  do_plot({&exp_data_hist_dalphat_0pi, pred_all_dalphat_0pi,
+           &plots_0pi_dalphat_stack, &plots_0pi_dalphat_leg},
+          "dalphat_0pi", dalphat_ytitle, "#delta#alpha_{T}",
+          {0.2, 0.6, 0.5, 0.9}, 0.,
+          form_legend(&exp_data_hist_dalphat_0pi, chi2_dalphat_0pi));
+
+  for (auto &&[name, list] : std::views::zip(vars, stacked_vars_0pi)) {
+    auto &&[stack, leg] = list;
+    auto plot_ent = get_info(name);
+    do_plot({&stack, &leg}, name + "_0pi", plot_ent.ytitle, plot_ent.name,
+            {0.6, 0.55, 0.9, 0.9}, 0., "MINERvA 0#pi", "HIST");
+  }
+  for (auto &&[name, list] : std::views::zip(vars, stacked_vars_pi0)) {
+    auto &&[stack, leg] = list;
+    auto plot_ent = get_info(name);
+    do_plot({&stack, &leg}, name + "_pi0", plot_ent.ytitle, plot_ent.name,
+            {0.6, 0.55, 0.9, 0.9}, 0., "MINERvA #pi^{0}", "HIST");
+  }
+
   file->Write();
   file->Close();
 
-  std::cout << "0pi" << std::endl;
-  df_0pi_report->Print();
+  for (auto channel : *channel_merged) {
+    if (std::ranges::none_of(list_name_id, [channel](auto &&name_id) {
+          auto &&[name, id] = name_id;
+          return id(channel);
+        })) {
+      std::cout << "WARNING!!! Unknown channel " << channel << std::endl;
+    }
+  }
+  std::cout << std::endl;
 
-  std::cout << "pi0" << std::endl;
+  std::cout << "0pi " << std::endl;
+  df_0pi_report->Print();
+  std::cout << "pi0 " << std::endl;
   df_pi0_report->Print();
   return 0;
 }

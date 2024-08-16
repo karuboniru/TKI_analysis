@@ -47,6 +47,6 @@ ROOT::RDF::RNode TrackerPrepare(ROOT::RDF::RNode df) {
                                       StdHepP4_[11]};
               },
               {"StdHepP4"})
-      .Filter([](double weight) { return abs(weight) < 1; },
-              {"weight"}, "sane weight");
+      .Filter([](double weight) { return abs(weight) <= 1; }, {"weight"},
+              "sane weight");
 }

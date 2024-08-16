@@ -2,11 +2,14 @@ cmake_minimum_required(VERSION 3.12)
 project(MyProject)
 
 set(CMAKE_CXX_STANDARD 23)
-# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 add_link_options(-Wl,--as-needed)
 
 # Locate CERN ROOT
 find_package(ROOT REQUIRED COMPONENTS RIO Tree)
+
+# enable O3
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 # Locate NuWro
 if (DEFINED NUWRO)
@@ -16,7 +19,8 @@ else()
 endif()
 
 if (NOT NUWRO_DIR)
-  message(FATAL_ERROR "Please set NUWRO environment variable to the path to the NuWro installation")
+  # message(FATAL_ERROR "Please set NUWRO environment variable to the path to the NuWro installation")
+  set(NUWRO_DIR /var/home/yan/neutrino/nuwro/nuwro.nuwro_21.09.2)
 endif()
 
 add_library(EVENT1 SHARED IMPORTED)

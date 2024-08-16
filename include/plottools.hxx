@@ -1,6 +1,4 @@
 #pragma once
-
-#pragma once
 #include <TAxis.h>
 #include <TCanvas.h>
 #include <TGaxis.h>
@@ -27,15 +25,25 @@ template <typename PtrType, typename... Bases>
 concept IsAllBasePtr = (IsBasePtr<PtrType, Bases> && ...);
 
 namespace style {
-constexpr auto fgkTextSize = 0.025;
-constexpr auto fgkTitleSize = 0.08;
+constexpr auto fgkTextSize = 0.05;
+constexpr auto fgkTitleSize = 0.05;
 constexpr auto fgkMarkerSize = 1;
 constexpr auto fgkLineWidth = 2;
 constexpr auto fgkTextFont = 42;
 constexpr auto fgkLabelOffset = 0.01;
-constexpr auto fgkXTitleOffset = 0.68; // 1.1;//1.25;
-constexpr auto fgkYTitleOffset = 0.73;  // 1.2;
+constexpr auto fgkXTitleOffset = 1.25; // 1.1;//1.25;
+constexpr auto fgkYTitleOffset = 1.1;  // 1.2;
 constexpr auto fgkTickLength = 0.02;
+
+// constexpr auto fgkTextSize = 0.07;
+// constexpr auto fgkTitleSize = 0.07;
+// constexpr auto fgkMarkerSize = 1;
+// constexpr auto fgkLineWidth = 2;
+// constexpr auto fgkTextFont = 42;
+// constexpr auto fgkLabelOffset = 0.01;
+// constexpr auto fgkXTitleOffset = 1.1; // 1.1;//1.25;
+// constexpr auto fgkYTitleOffset = 0.75;  // 1.2;
+// constexpr auto fgkTickLength = 0.02;
 
 class global_style {
 public:
@@ -72,11 +80,11 @@ public:
     gStyle->SetTitleFontSize(fgkTitleSize);
     gStyle->SetTitleOffset(fgkXTitleOffset, "x");
     gStyle->SetTitleOffset(fgkYTitleOffset, "y");
-    gStyle->SetTitleOffset(1.2, "z");
+    gStyle->SetTitleOffset(1.0, "z");
     gStyle->SetTitleSize(fgkTitleSize, "xyz");
     gStyle->SetTitleSize(fgkTitleSize, "");
     gStyle->SetMarkerSize(fgkMarkerSize);
-    // gStyle->SetPalette(1, 0);
+    gStyle->SetPalette(1, 0);
     TGaxis::SetMaxDigits(3);
     gStyle->SetTitleBorderSize(-1);
     if (lStat) {
@@ -96,14 +104,14 @@ public:
   }
 };
 // automatically set the style, per program instance
-// inline global_style global_style_instance;
+inline global_style global_style_instance;
 } // namespace style
 
 template <IsBasePtr<TCanvas> T>
-void PadSetup(T &&currentPad, const Double_t currentLeft = 0.13,
+void PadSetup(T &&currentPad, const Double_t currentLeft = 0.12,
               const Double_t currentTop = 0.08,
-              const Double_t currentRight = 0.18,
-              const Double_t currentBottom = 0.13) {
+              const Double_t currentRight = 0.037,
+              const Double_t currentBottom = 0.17) {
   currentPad->SetTicks(1, 1);
   currentPad->SetLeftMargin(currentLeft);
   currentPad->SetTopMargin(currentTop);
@@ -121,7 +129,7 @@ template <IsAnyBasePtr<TAxis, TGaxis> T> void AxisStyle(T &&ax, Bool_t kcen) {
   ax->SetTickLength(fgkTickLength);
 
   ax->SetLabelFont(fgkTextFont);
-  ax->SetLabelSize(fgkTextSize*1.5);
+  ax->SetLabelSize(fgkTextSize);
   ax->SetLabelOffset(fgkLabelOffset);
 
   ax->SetTitleFont(fgkTextFont);
@@ -167,9 +175,10 @@ void ResetStyle(T &&obj, TVirtualPad *cpad = nullptr, Bool_t kcen = true) {
   }
 }
 
-std::unique_ptr<TCanvas> inline getCanvas(const char *name = "") {
+std::unique_ptr<TCanvas> inline getCanvas(const char *name = "", int ww = 600,
+                                         int wh = 400) {
   constexpr size_t factor = 1;
-  auto c = std::make_unique<TCanvas>(name, name, 800 * factor, 600 * factor);
+  auto c = std::make_unique<TCanvas>(name, name, ww * factor, wh * factor);
   PadSetup(c);
   c->cd();
   return c;
