@@ -36,11 +36,11 @@ using plot_ptr_t =
 
 // this is general channel definition
 const std::vector<std::tuple<std::string, std::function<bool(int)>>>
-    list_name_id{{"QEL", [](int id) { return id == 1; }},
-                 {"RES", [](int id) { return id >= 2 && id <= 33; }},
-                 {"DIS", [](int id) { return id == 34; }},
-                 {"MEC", [](int id) { return id == 35; }},
-                 {"2PIBG", [](int id) { return id == 37; }}};
+    list_channel_channeldef{{"QE", [](int id) { return id == 1; }},
+                            {"RES", [](int id) { return id >= 2 && id <= 33; }},
+                            {"DIS", [](int id) { return id == 34; }},
+                            {"2p2h", [](int id) { return id == 35; }},
+                            {"2#pi BG", [](int id) { return id == 37; }}};
 
 // pion count definition for pi0 channel
 const std::vector<std::tuple<std::string, std::function<bool(size_t)>>>
@@ -62,18 +62,19 @@ struct plot_data {
   double xmin, xmax;
   std::string name;
   std::string ytitle;
+  double ymax_0pi{}, ymax_pi0{};
 };
 
 plot_data get_info(std::string varname) {
   if (varname == "dalphat") {
-    return plot_data{
-        30, 0., 180., "#delta#alpha_{T}",
-        "d#sigma/d#delta#alpha_{T} (#times 10^{-38} cm^{2}/degree/nucleon)"};
+    return plot_data{30, 0., 180., "#delta#alpha_{T} (degree)",
+                     "d#sigma/d#delta#alpha_{T} (10^{#minus 38} "
+                     "cm^{2}/degree/nucleon)"};
   }
   if (varname == "IApN") {
-    return plot_data{
-        30, 0., 0.8, "p_{N}",
-        "d#sigma/d#it{p}_{N} (#times 10^{-38} cm^{2}/GeV/#it{c}/nucleon)"};
+    return plot_data{30, 0., 0.8, "#it{p}_{N} (GeV/#it{c})",
+                     "d#sigma/d#it{p}_{N} (10^{#minus 38} "
+                     "cm^{2}/GeV/#it{c}/nucleon)"};
   }
   if (varname == "dpL") {
     return plot_data{30, -1., 1., "#delta p_{L}"};
@@ -88,16 +89,31 @@ plot_data get_info(std::string varname) {
     return plot_data{30, -1., 1., "cos #delta#alpha_{L}"};
   }
   if (varname == "Q2") {
-    return plot_data{50, 0., 5., "Q^{2} (GeV^{2})",
-                     "d#sigma/dQ^{2} (#times 10^{-38} cm^{2}/GeV^2/nucleon)"};
+    return plot_data{50,
+                     0.,
+                     5.,
+                     "#it{Q}^{2} (GeV^{ 2})",
+                     "d#sigma/dQ^{2} (10^{#minus 38} cm^{2}/GeV^{ 2}/nucleon)",
+                     0.3,
+                     0.15};
   }
   if (varname == "xBj") {
-    return plot_data{50, 0., 2.0, "x_{Bj}",
-                     "d#sigma/dx_{Bj} (#times 10^{-38} cm^{2}/nucleon)"};
+    return plot_data{50,
+                     0.,
+                     2.0,
+                     "#it{x}_{Bj}",
+                     "d#sigma/dx_{Bj} (10^{#minus 38} cm^{2}/nucleon)",
+                     .5,
+                     .2};
   }
   if (varname == "W") {
-    return plot_data{60, 0.8, 4.0, "W (GeV)",
-                     "d#sigma/dW (#times 10^{-38} cm^{2}/GeV/nucleon)"};
+    return plot_data{60,
+                     0.8,
+                     4.0,
+                     "#it{W} (GeV)",
+                     "d#sigma/dW (10^{#minus 38} cm^{2}/GeV/nucleon)",
+                     2,
+                     .15};
   }
   throw std::runtime_error("Unknown variable name");
 }
@@ -128,19 +144,22 @@ template <typename T, size_t N = 0>
 auto plot_channels_0pi(
     T &&df_in, std::string variable,
     std::optional<std::array<double, N>> bins = std::nullopt) {
-  return list_name_id |
-         std::views::transform(
-             [&](std::tuple<std::string, std::function<bool(int)>> name_id) {
-               auto &[name, id] = name_id;
-               if constexpr (N != 0)
-                 return std::make_tuple(
-                     name, make_plots(df_in.Filter(id, {"channel"}),
-                                      bins.value(), variable, name + "_0pi"));
-               else
-                 return std::make_tuple(
-                     name, make_plots(df_in.Filter(id, {"channel"}), variable,
-                                      name + "_0pi"));
-             }) |
+  return list_channel_channeldef | std::views::enumerate |
+         std::views::transform([&](auto &&name_id_count) {
+           auto &[count, name_id] = name_id_count;
+           auto &[name, id] = name_id;
+           if constexpr (N != 0)
+             return std::make_tuple(name,
+                                    make_plots(df_in.Filter(id, {"channel"}),
+                                               bins.value(), variable,
+                                               name + "_0pi"),
+                                    count * 2);
+           else
+             return std::make_tuple(name,
+                                    make_plots(df_in.Filter(id, {"channel"}),
+                                               variable, name + "_0pi"),
+                                    count * 2);
+         }) |
          std::ranges::to<std::vector>();
 }
 
@@ -148,38 +167,48 @@ template <typename T, size_t N = 0>
 auto plot_channels_pi0(
     T &&df_in, std::string variable,
     std::optional<std::array<double, N>> bins = std::nullopt) {
-  return std::views::cartesian_product(list_name_id, list_pion_cut) |
+  return std::views::cartesian_product(list_channel_channeldef |
+                                           std::views::enumerate,
+                                       list_pion_cut | std::views::enumerate) |
          std::views::transform([&](auto &&tup) {
-           auto &&[name_id, pion_cut] = tup;
+           auto &&[count1_name_id, count2_pion_cut] = tup;
+           auto &&[count1, name_id] = count1_name_id;
+           auto &&[count2, pion_cut] = count2_pion_cut;
+
            auto &&[name, id] = name_id;
            auto &&[pion_name, cut] = pion_cut;
            if constexpr (N != 0)
              return std::make_tuple(
                  name + " " + pion_pretty_name(pion_name),
                  make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
-                            bins.value(), variable, name + "_" + pion_name));
+                            bins.value(), variable, name + "_" + pion_name),
+                 count1 * 2 + count2);
            else
              return std::make_tuple(
                  name + " " + pion_pretty_name(pion_name),
                  make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
-                            variable, name + "_" + pion_name));
+                            variable, name + "_" + pion_name),
+                 count1 * 2 + count2);
          }) |
          std::ranges::to<std::vector>();
 }
 
-constexpr std::array<int, 10> col{kRed,   kBlue, kViolet, kYellow, kOrange,
-                                  kGreen, kGray, kTeal,   kPink};
+// constexpr std::array<int, 12> col{1014, 1003, 1002, 1009, 1010, 1007,
+//                                   1012, 1005, 1011, 1008, 1014, 1017};
+// auto col = GetColorArray(8);
+
 std::tuple<THStack, TLegend> build_stack_from_list(
-    std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>>> list,
+    std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>, long>> list,
     double threshold) {
+  IniColorCB();
   std::tuple<THStack, TLegend> tup;
   auto &&[stack, legend] = tup;
   size_t skipped = 0;
-  for (auto &&[id, plot_entry] : list | std::views::enumerate) {
-    auto &&[name, plot] = plot_entry;
-    plot->SetLineColor(col[id - skipped]);
-    plot->SetFillColor(col[id - skipped]);
-    plot->SetFillStyle(1001);
+  for (auto &&[name, plot, color_diff] : list) {
+    // auto &&[name, plot] = plot_entry;
+    plot->SetLineColor(fgkColorBase + 1 + color_diff);
+    plot->SetFillColor(fgkColorBase + 1 + color_diff);
+    // plot->SetFillStyle(1001);
 
     stack.Add(plot.GetPtr());
     if (plot->Integral("WIDTH") > threshold)
@@ -193,7 +222,8 @@ std::tuple<THStack, TLegend> build_stack_from_list(
 void do_plot(std::vector<plot_ptr_t> plot_ptrs_list, std::string filename,
              std::string_view ytitle, std::string_view xtitle,
              std::array<double, 4> legend_pos, double xmax = 0.,
-             std::string legend_head = "", std::string histopt = "HISTC") {
+             std::string legend_head = "", std::string histopt = "HISTC",
+             double ymax = 0.) {
   auto c = getCanvas();
   PadSetup(c.get());
   for (auto [id, obj] : plot_ptrs_list | std::views::enumerate) {
@@ -211,6 +241,9 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list, std::string filename,
             arg->SetMinimum(0);
             if (xmax > 0.) {
               arg->GetXaxis()->SetRangeUser(0., xmax);
+            }
+            if (ymax) {
+              arg->SetMaximum(ymax);
             }
             if (id == 0) {
               arg->SetFillColor(kBlack);
@@ -242,16 +275,25 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list, std::string filename,
             if (id == 0) {
               auto last = dynamic_cast<TH1 *>(arg->GetStack()->Last());
               ResetStyle(last);
+              last->Draw();
               last->GetXaxis()->SetTitle(xtitle.data());
               last->GetYaxis()->SetTitle(ytitle.data());
+              if (ymax) {
+                last->SetMaximum(ymax);
+              }
               last->Draw(hist_draw_opt.c_str());
             }
-            arg->Draw(("same " + hist_draw_opt).c_str());
+            arg->Draw((hist_draw_opt + " SAME").c_str());
           }
         },
         obj);
   }
-  std::visit([&](auto &&obj) { obj->Draw("E0 X1 SAME"); }, plot_ptrs_list[0]);
+  std::visit(
+      [&](auto &&obj) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(obj)>, TH1 *>)
+          obj->Draw("E0 X1 SAME");
+      },
+      plot_ptrs_list[0]);
   c->SaveAs((filename + ".pdf").c_str());
   c->SaveAs((filename + ".eps").c_str());
   c->SaveAs((filename + ".svg").c_str());
@@ -281,59 +323,61 @@ int main(int argc, char *argv[]) {
       "channel", std::set<int>{});
 
   auto doTKI_pi0 = [](ROOT::RDF::RNode d) {
-    return CommonVariableDefine(DoTKICut_MINERvA(d))
+    return CommonVariableDefinePI0(DoTKICut_MINERvA_pi0(d))
         .Define("npi0",
                 [](ROOT::RVec<TLorentzVector> &pions) { return pions.size(); },
                 {"good_pion"})
-        .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
-                {"TKIVars"})
-        .Define("realpL",
-                [](TLorentzVector InitNucleon) { return InitNucleon.Z(); },
-                {"InitNucleon"})
-        .Define(
-            "realpn",
-            [](TLorentzVector InitNucleon) { return InitNucleon.CosTheta(); },
-            {"InitNucleon"})
-        .Define("p_cos_theta",
-                [](const TLorentzVector &full_hadron) {
-                  return full_hadron.CosTheta();
-                },
-                {"leading_proton"})
-        .Define("p_theta",
-                [](const TLorentzVector &full_hadron) {
-                  return full_hadron.Theta() / M_PI * 180.;
-                },
-                {"leading_proton"})
+        // .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
+        //         {"TKIVars"})
+        // .Define("realpL",
+        //         [](TLorentzVector InitNucleon) { return InitNucleon.Z(); },
+        //         {"InitNucleon"})
+        // .Define(
+        //     "realpn",
+        //     [](TLorentzVector InitNucleon) { return InitNucleon.CosTheta();
+        //     },
+        //     {"InitNucleon"})
+        // .Define("p_cos_theta",
+        //         [](const TLorentzVector &full_hadron) {
+        //           return full_hadron.CosTheta();
+        //         },
+        //         {"leading_proton"})
+        // .Define("p_theta",
+        //         [](const TLorentzVector &full_hadron) {
+        //           return full_hadron.Theta() / M_PI * 180.;
+        //         },
+        //         {"leading_proton"})
         .Define("dalphat", [](TKIVars &vars) { return vars.dalphat; },
                 {"TKIVars"})
-        .Define("dpL", [](TKIVars &vars) { return vars.dpL; }, {"TKIVars"})
+        // .Define("dpL", [](TKIVars &vars) { return vars.dpL; }, {"TKIVars"})
         .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"});
   };
 
   auto doTKI_0pi = [](ROOT::RDF::RNode d) {
     return CommonVariableDefine0PI(DoTKICut_MINERvA0PI(d))
-        .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
-                {"TKIVars"})
-        .Define("realpL",
-                [](TLorentzVector InitNucleon) { return InitNucleon.Z(); },
-                {"InitNucleon"})
-        .Define(
-            "realpn",
-            [](TLorentzVector InitNucleon) { return InitNucleon.CosTheta(); },
-            {"InitNucleon"})
-        .Define("p_cos_theta",
-                [](const TLorentzVector &full_hadron) {
-                  return full_hadron.CosTheta();
-                },
-                {"full_hadron"})
-        .Define("p_theta",
-                [](const TLorentzVector &full_hadron) {
-                  return full_hadron.Theta() / M_PI * 180.;
-                },
-                {"full_hadron"})
+        // .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
+        //         {"TKIVars"})
+        // .Define("realpL",
+        //         [](TLorentzVector InitNucleon) { return InitNucleon.Z(); },
+        //         {"InitNucleon"})
+        // .Define(
+        //     "realpn",
+        //     [](TLorentzVector InitNucleon) { return InitNucleon.CosTheta();
+        //     },
+        //     {"InitNucleon"})
+        // .Define("p_cos_theta",
+        //         [](const TLorentzVector &full_hadron) {
+        //           return full_hadron.CosTheta();
+        //         },
+        //         {"full_hadron"})
+        // .Define("p_theta",
+        //         [](const TLorentzVector &full_hadron) {
+        //           return full_hadron.Theta() / M_PI * 180.;
+        //         },
+        //         {"full_hadron"})
         .Define("dalphat", [](TKIVars &vars) { return vars.dalphat; },
                 {"TKIVars"})
-        .Define("dpL", [](TKIVars &vars) { return vars.dpL; }, {"TKIVars"})
+        // .Define("dpL", [](TKIVars &vars) { return vars.dpL; }, {"TKIVars"})
         .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"});
   };
 
@@ -384,7 +428,7 @@ int main(int argc, char *argv[]) {
                        std::ranges::to<std::vector>();
   auto add_to_plots_vars = [&](auto &&list) {
     for (auto &&list_entry : list) {
-      for (auto &&[name, plot] : list_entry) {
+      for (auto &&plot : list_entry | std::views::values) {
         plots.emplace_back(plot);
       }
     }
@@ -393,7 +437,7 @@ int main(int argc, char *argv[]) {
   add_to_plots_vars(var_plots_pi0);
 
   auto add_to_plots = [&](auto &&list) {
-    for (auto &&[name, plot] : list) {
+    for (auto &&plot : list | std::views::values) {
       plots.emplace_back(plot);
     }
   };
@@ -405,37 +449,78 @@ int main(int argc, char *argv[]) {
   auto df_pi0_report = rdf_pi0_after_cut.Report();
   auto df_0pi_report = rdf_0pi_after_cut.Report();
 
+  auto hist2d =
+      rdf_0pi_after_cut
+          .Define(
+              "InitNucleonMass",
+              [](const TLorentzVector &InitNucleon) { return InitNucleon.M(); },
+              {"InitNucleon"})
+          .Histo2D({"W_vs_InitNucleonMass", "W_vs_InitNucleonMass;W;M", 60, 0.8,
+                    1.2, 60, 0.8, 1.2},
+                   "W", "InitNucleonMass", "weight");
+  auto hist2d_another =
+      rdf_0pi_after_cut
+          .Define("deltam2",
+                  [](const TLorentzVector &InitNeutrino,
+                     const TLorentzVector &PrimaryLepton,
+                     const TLorentzVector &InitNucleon) {
+                    auto had_sys = InitNucleon + InitNeutrino - PrimaryLepton;
+                    auto W = had_sys.M();
+                    auto M = InitNucleon.M();
+                    return W - M;
+                  },
+                  {"InitNeutrino", "PrimaryLepton", "InitNucleon"})
+          .Define("pdotq",
+                  [](const TLorentzVector &InitNeutrino,
+                     const TLorentzVector &PrimaryLepton,
+                     const TLorentzVector &InitNucleon) {
+                    auto q = InitNeutrino - PrimaryLepton;
+                    auto p = InitNucleon;
+                    return p.Dot(q);
+                  },
+                  {"InitNeutrino", "PrimaryLepton", "InitNucleon"})
+          .Histo2D({"deltam2_vs_pdotq", "deltam2_vs_pdotq;deltam2;pdotq", 60,
+                    -0.5, 0.5, 60, 0, 5},
+                   "deltam2", "pdotq", "weight");
+
   auto file = std::make_unique<TFile>("dtl_all.root", "RECREATE");
+  file->Add(hist2d.GetPtr());
+  file->Add(hist2d_another.GetPtr());
   for (auto &&plot : plots) {
     plot->Scale((12. / 13.) / n_runs / 10, "width");
     file->Add(plot.GetPtr());
   }
 
-  constexpr double threshold_frac = 1e-2;
+  constexpr double threshold_frac_0pi = 1.5e-2;
+  constexpr double threshold_frac_pi0 = .5e-2;
+
   auto xsecint_0pi = pred_all_dalphat_0pi->Integral("WIDTH");
   auto xsecint_pi0 = pred_all_dalphat_pi0->Integral("WIDTH");
   auto [plots_0pi_IApN_stack, plots_0pi_IApN_leg] = build_stack_from_list(
-      plots_0pi_IApN, pred_all_IApN_0pi->Integral("WIDTH") * threshold_frac);
+      plots_0pi_IApN,
+      pred_all_IApN_0pi->Integral("WIDTH") * threshold_frac_0pi);
   auto [plots_0pi_dalphat_stack, plots_0pi_dalphat_leg] = build_stack_from_list(
       plots_0pi_dalphat,
-      pred_all_dalphat_0pi->Integral("WIDTH") * threshold_frac);
+      pred_all_dalphat_0pi->Integral("WIDTH") * threshold_frac_0pi);
+
   auto [plots_pi0_IApN_stack, plots_pi0_IApN_leg] = build_stack_from_list(
-      plots_pi0_IApN, pred_all_IApN_pi0->Integral("WIDTH") * threshold_frac);
+      plots_pi0_IApN,
+      pred_all_IApN_pi0->Integral("WIDTH") * threshold_frac_pi0);
   auto [plots_pi0_dalphat_stack, plots_pi0_dalphat_leg] = build_stack_from_list(
       plots_pi0_dalphat,
-      pred_all_dalphat_pi0->Integral("WIDTH") * threshold_frac);
+      pred_all_dalphat_pi0->Integral("WIDTH") * threshold_frac_pi0);
 
   auto stacked_vars_0pi =
       var_plots_0pi | std::views::transform([&](auto &&list) {
-        return build_stack_from_list(list, xsecint_0pi * threshold_frac);
+        return build_stack_from_list(list, xsecint_0pi * threshold_frac_0pi);
       }) |
       std::ranges::to<std::vector>();
   auto stacked_vars_pi0 =
       var_plots_pi0 | std::views::transform([&](auto &&list) {
-        return build_stack_from_list(list, xsecint_pi0 * threshold_frac);
+        return build_stack_from_list(list, xsecint_pi0 * threshold_frac_pi0);
       }) |
       std::ranges::to<std::vector>();
-  
+
   auto exp_data_hist_IApN_pi0 = get_IApN_hist_pi0();
   auto exp_data_hist_IApN_0pi = get_IApN_hist_0pi();
   auto exp_data_hist_dalphat_pi0 = get_dalphat_hist_pi0();
@@ -463,31 +548,29 @@ int main(int argc, char *argv[]) {
        << " #chi^{2}/NDF = " << round(chi2) << " / " << hist->GetNbinsX();
     return ss.str();
   };
-  const std::string pn_ytitle =
-      "d#sigma/d#it{p}_{N} (#times 10^{-38} cm^{2}/GeV/#it{c}/nucleon)";
-  const std::string dalphat_ytitle =
-      "d#sigma/d#delta#alpha_{T} (#times 10^{-38} cm^{2}/degree/nucleon)";
 
   // first entry always data, then anything else
   do_plot({&exp_data_hist_IApN_pi0, pred_all_IApN_pi0, &plots_pi0_IApN_stack,
            &plots_pi0_IApN_leg},
-          "IApN_pi0", pn_ytitle, "p_{N}", {0.6, 0.55, 0.9, 0.9}, 0.8,
+          "IApN_pi0", get_info("IApN").ytitle, get_info("IApN").name,
+          {0.6, 0.55, 0.9, 0.9}, 0.8,
           form_legend(&exp_data_hist_IApN_pi0, chi2_IApN_pi0));
 
   do_plot({&exp_data_hist_IApN_0pi, pred_all_IApN_0pi, &plots_0pi_IApN_stack,
            &plots_0pi_IApN_leg},
-          "IApN_0pi", pn_ytitle, "p_{N}", {0.6, 0.6, 0.9, 0.9}, 0.8,
+          "IApN_0pi", get_info("IApN").ytitle, get_info("IApN").name,
+          {0.6, 0.6, 0.9, 0.9}, 0.8,
           form_legend(&exp_data_hist_IApN_0pi, chi2_IApN_0pi));
 
   do_plot({&exp_data_hist_dalphat_pi0, pred_all_dalphat_pi0,
            &plots_pi0_dalphat_stack, &plots_pi0_dalphat_leg},
-          "dalphat_pi0", dalphat_ytitle, "#delta#alpha_{T}",
+          "dalphat_pi0", get_info("dalphat").ytitle, get_info("dalphat").name,
           {0.2, 0.5, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_pi0, chi2_dalphat_pi0));
 
   do_plot({&exp_data_hist_dalphat_0pi, pred_all_dalphat_0pi,
            &plots_0pi_dalphat_stack, &plots_0pi_dalphat_leg},
-          "dalphat_0pi", dalphat_ytitle, "#delta#alpha_{T}",
+          "dalphat_0pi", get_info("dalphat").ytitle, get_info("dalphat").name,
           {0.2, 0.6, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_0pi, chi2_dalphat_0pi));
 
@@ -495,31 +578,31 @@ int main(int argc, char *argv[]) {
     auto &&[stack, leg] = list;
     auto plot_ent = get_info(name);
     do_plot({&stack, &leg}, name + "_0pi", plot_ent.ytitle, plot_ent.name,
-            {0.6, 0.55, 0.9, 0.9}, 0., "MINERvA 0#pi", "HIST");
+            {0.6, 0.55, 0.9, 0.9}, 0., "GiBUU MINERvA 0#pi", "HIST",
+            plot_ent.ymax_0pi);
   }
   for (auto &&[name, list] : std::views::zip(vars, stacked_vars_pi0)) {
     auto &&[stack, leg] = list;
     auto plot_ent = get_info(name);
     do_plot({&stack, &leg}, name + "_pi0", plot_ent.ytitle, plot_ent.name,
-            {0.6, 0.55, 0.9, 0.9}, 0., "MINERvA #pi^{0}", "HIST");
+            {0.6, 0.55, 0.9, 0.9}, 0., "GiBUU MINERvA #pi^{0}", "HIST",
+            plot_ent.ymax_pi0);
   }
 
   file->Write();
   file->Close();
 
   for (auto channel : *channel_merged) {
-    if (std::ranges::none_of(list_name_id, [channel](auto &&name_id) {
-          auto &&[name, id] = name_id;
-          return id(channel);
-        })) {
+    if (std::ranges::none_of(list_channel_channeldef | std::views::values,
+                             [channel](auto &&id) { return id(channel); })) {
       std::cout << "WARNING!!! Unknown channel " << channel << std::endl;
     }
   }
   std::cout << std::endl;
 
-  std::cout << "0pi " << std::endl;
+  std::cout << "0pi Cut Summary:" << std::endl;
   df_0pi_report->Print();
-  std::cout << "pi0 " << std::endl;
+  std::cout << "pi0 Cut Summary:" << std::endl;
   df_pi0_report->Print();
   return 0;
 }

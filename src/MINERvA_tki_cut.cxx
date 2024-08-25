@@ -8,7 +8,7 @@
 bool acceptEventMINERvAPi0(const TKIEvent &e) {
   for (auto &&id : e.get_ids_post()) {
     auto absid = std::abs(id);
-    if ((absid != 13) && (absid != 2212) && (absid != 2112) && (absid != 111) &&
+    if ((id != 13) && (id != 2212) && (id != 2112) && (absid != 111) &&
         ((absid > 99 && absid < 1000) || (absid == 22 || absid == 11) ||
          (absid > 3000 && absid < 5000) || (absid == 2103) ||
          (absid == 2203))) {
@@ -22,7 +22,7 @@ bool acceptEventMINERvAPi0(const TKIEvent &e) {
 bool acceptEventMINERvA0PI(const TKIEvent &e) {
   for (auto &&id : e.get_ids_post()) {
     auto absid = std::abs(id);
-    if ((absid != 13) && (absid != 2212) && (absid != 2112) &&
+    if ((id != 13) && (id != 2212) && (id != 2112) &&
         ((absid > 99 && absid < 1000) || (absid == 22 || absid == 11) ||
          (absid > 3000 && absid < 5000) || (absid == 2103) ||
          (absid == 2203))) {
@@ -33,7 +33,7 @@ bool acceptEventMINERvA0PI(const TKIEvent &e) {
   return true;
 }
 
-ROOT::RDF::RNode DoTKICut_MINERvA(ROOT::RDF::RNode df) {
+ROOT::RDF::RNode DoTKICut_MINERvA_pi0(ROOT::RDF::RNode df) {
   return df
       .Define("good_muon",
               [](TKIEvent &event) {
@@ -150,7 +150,7 @@ ROOT::RDF::RNode vars_define(ROOT::RDF::RNode df) {
               {"InitNeutrino", "PrimaryLepton", "InitNucleon"});
 }
 
-ROOT::RDF::RNode CommonVariableDefine(ROOT::RDF::RNode df) {
+ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
   return vars_define(
       df.Define("leading_proton",
                 [](ROOT::RVec<TLorentzVector> &protons) {

@@ -59,7 +59,7 @@ TH1D get_IApN_hist_pi0() {
   auto hist_from_root =
       (TH1D *)(((TList *)pizero_file.Get("neutronmomentum"))->At(0));
 
-  TH1D data("data_IApN_pi0", "#pi^{0} Data", bin_edges.size() - 1,
+  TH1D data("data_IApN_pi0", "MINERvA #pi^{0} Data", bin_edges.size() - 1,
             bin_edges.data());
 
   auto cov = get_cov_IApN_pi0();
@@ -78,7 +78,7 @@ TH1D get_dalphat_hist_pi0() {
   // std::array<double, 9>
   // exp_value{4.5, 4.5, 4.3, 4.1, 4.3, 4.7, 5.9, 8.2, 10.2};
   auto hist_from_root = (TH1D *)(((TList *)pizero_file.Get("dalphat"))->At(0));
-  TH1D data("data_dalphat_pi0", "#pi^{0} Data", bin_edges.size() - 1,
+  TH1D data("data_dalphat_pi0", "MINERvA #pi^{0} Data", bin_edges.size() - 1,
             bin_edges.data());
 
   auto cov = get_cov_dalphat_pi0();
@@ -104,7 +104,7 @@ TH1D get_IApN_hist_0pi() {
   auto hist_from_root =
       (TH1D *)(((TList *)zeropi_file.Get("neutronmomentum"))->At(0));
 
-  TH1D data("data_IApN_0pi", "0#pi Data", bin_edges.size() - 1,
+  TH1D data("data_IApN_0pi", "MINERvA 0#pi Data", bin_edges.size() - 1,
             bin_edges.data());
 
   auto cov = get_cov_IApN_0pi();
@@ -125,7 +125,7 @@ TH1D get_dalphat_hist_0pi() {
   // std::array<double, 12> exp_value{7.8,  6.5,  7.3,  7.0,  8.0,  9.4,
   //                                  11.6, 14.1, 16.2, 19.4, 19.0, 16.9};
   auto hist_from_root = (TH1D *)(((TList *)zeropi_file.Get("dalphat"))->At(0));
-  TH1D data("data_dalphat_0pi", "0#pi Data", bin_edges.size() - 1,
+  TH1D data("data_dalphat_0pi", "MINERvA 0#pi Data", bin_edges.size() - 1,
             bin_edges.data());
 
   auto cov = get_cov_dalphat_0pi();

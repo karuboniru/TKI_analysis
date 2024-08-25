@@ -9,7 +9,7 @@ add_link_options(-Wl,--as-needed)
 find_package(ROOT REQUIRED COMPONENTS RIO Tree)
 
 # enable O3
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
 
 # Locate NuWro
 if (DEFINED NUWRO)
@@ -34,7 +34,7 @@ file(GLOB SOURCES src/*.cxx)
 file(GLOB HEADERS include/*.h)
 
 #  ${SOURCES} -> libanalysis.so
-add_library(analysis SHARED ${SOURCES})
+add_library(analysis STATIC ${SOURCES})
 target_link_libraries(analysis PRIVATE EVENT1 ROOT::Physics ROOT::ROOTDataFrame)
 root_generate_dictionary(G__Dict ${HEADERS} MODULE analysis LINKDEF LinkDef.h)
 
@@ -128,6 +128,5 @@ add_executable(minerva_all_gibuu_plot minerva_all_gibuu_plot.cpp)
 # Link all the object files to the main executable
 target_link_libraries(minerva_all_gibuu_plot PRIVATE 
   ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree ROOT::Hist ROOT::Gpad
-  EVENT1
   analysis
 )

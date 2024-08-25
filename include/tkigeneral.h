@@ -20,5 +20,5 @@ TKIVars getCommonTKI(const int targetA, const int targetZ,
 double getdpLMassless(TLorentzVector pmu, TLorentzVector p_hadron);
 double get_factor_pdv(TLorentzVector pmu, TLorentzVector p_hadron);
 
-ROOT::RDF::RNode CommonVariableDefine(ROOT::RDF::RNode df);
+ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df);
 ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df);

@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
   auto count = input.Count();
 
   auto doTKI_pi0 = [](ROOT::RDF::RNode d) {
-    return CommonVariableDefine(DoTKICut_MINERvA(d))
+    return CommonVariableDefinePI0(DoTKICut_MINERvA_pi0(d))
         .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
                 {"TKIVars"})
         .Define("realpL",

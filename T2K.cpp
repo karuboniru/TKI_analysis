@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
   // auto weight = d.Mean("weight");
   auto count = d.Count();
 
-  auto d_TKICut = CommonVariableDefine(DoTKICut_T2K(d));
+  auto d_TKICut = CommonVariableDefinePI0(DoTKICut_T2K(d));
   auto count_after_cut = d_TKICut.Count();
   auto count_H =
       d_TKICut.Filter([](int Z) { return Z == 1; }, {"targetZ"}).Count();

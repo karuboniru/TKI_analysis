@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
   auto count = d.Count();
 
   auto d_TKIResult =
-      CommonVariableDefine(DoTKICut_MINERvA(d))
+      CommonVariableDefinePI0(DoTKICut_MINERvA_pi0(d))
           .Define("dtl", [](TKIVars &vars) { return vars.dpL / vars.IApN; },
                   {"TKIVars"})
           .Define("realpL",
