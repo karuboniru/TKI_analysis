@@ -36,11 +36,11 @@ using plot_ptr_t =
 
 // this is general channel definition
 const std::vector<std::tuple<std::string, std::function<bool(int)>>>
-    list_channel_channeldef{{"QE", [](int id) { return id == 1; }},
+    list_channel_channeldef{{"2#pi BG", [](int id) { return id == 37; }},
+                            {"QE", [](int id) { return id == 1; }},
                             {"RES", [](int id) { return id >= 2 && id <= 33; }},
                             {"DIS", [](int id) { return id == 34; }},
-                            {"2p2h", [](int id) { return id == 35; }},
-                            {"2#pi BG", [](int id) { return id == 37; }}};
+                            {"2p2h", [](int id) { return id == 35; }}};
 
 // pion count definition for pi0 channel
 const std::vector<std::tuple<std::string, std::function<bool(size_t)>>>
@@ -67,8 +67,8 @@ struct plot_data {
 
 plot_data get_info(std::string varname) {
   if (varname == "dalphat") {
-    return plot_data{30, 0., 180., "#delta#alpha_{T} (degree)",
-                     "d#sigma/d#delta#alpha_{T} (10^{#minus 38} "
+    return plot_data{30, 0., 180., "#delta#it{#alpha}_{T} (degree)",
+                     "d#sigma/d#delta#it{#alpha}_{T} (10^{#minus 38} "
                      "cm^{2}/degree/nucleon)"};
   }
   if (varname == "IApN") {
@@ -89,20 +89,21 @@ plot_data get_info(std::string varname) {
     return plot_data{30, -1., 1., "cos #delta#alpha_{L}"};
   }
   if (varname == "Q2") {
-    return plot_data{50,
-                     0.,
-                     5.,
-                     "#it{Q}^{2} (GeV^{ 2})",
-                     "d#sigma/dQ^{2} (10^{#minus 38} cm^{2}/GeV^{ 2}/nucleon)",
-                     0.3,
-                     0.15};
+    return plot_data{
+        50,
+        0.,
+        5.,
+        "#it{Q}^{2} (GeV^{ 2})",
+        "d#sigma/d#it{Q}^{2} (10^{#minus 38} cm^{2}/GeV^{ 2}/nucleon)",
+        0.3,
+        0.15};
   }
   if (varname == "xBj") {
     return plot_data{50,
                      0.,
                      2.0,
                      "#it{x}_{Bj}",
-                     "d#sigma/dx_{Bj} (10^{#minus 38} cm^{2}/nucleon)",
+                     "d#sigma/d#it{x}_{Bj} (10^{#minus 38} cm^{2}/nucleon)",
                      .5,
                      .2};
   }
@@ -111,7 +112,7 @@ plot_data get_info(std::string varname) {
                      0.8,
                      4.0,
                      "#it{W} (GeV)",
-                     "d#sigma/dW (10^{#minus 38} cm^{2}/GeV/nucleon)",
+                     "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
                      2,
                      .15};
   }
@@ -141,9 +142,8 @@ ROOT::RDF::RResultPtr<TH1> make_plots(T &&df_in, std::string variable,
 }
 
 template <typename T, size_t N = 0>
-auto plot_channels_0pi(
-    T &&df_in, std::string variable,
-    std::optional<std::array<double, N>> bins = std::nullopt) {
+auto plot_channels_0pi(T &&df_in, std::string variable,
+                       std::array<double, N> bins = std::array<double, 0>{}) {
   return list_channel_channeldef | std::views::enumerate |
          std::views::transform([&](auto &&name_id_count) {
            auto &[count, name_id] = name_id_count;
@@ -151,8 +151,7 @@ auto plot_channels_0pi(
            if constexpr (N != 0)
              return std::make_tuple(name,
                                     make_plots(df_in.Filter(id, {"channel"}),
-                                               bins.value(), variable,
-                                               name + "_0pi"),
+                                               bins, variable, name + "_0pi"),
                                     count * 2);
            else
              return std::make_tuple(name,
@@ -164,14 +163,14 @@ auto plot_channels_0pi(
 }
 
 template <typename T, size_t N = 0>
-auto plot_channels_pi0(
-    T &&df_in, std::string variable,
-    std::optional<std::array<double, N>> bins = std::nullopt) {
+auto plot_channels_pi0(T &&df_in, std::string variable,
+                       std::array<double, N> bins = std::array<double, 0>{}) {
   return std::views::cartesian_product(list_channel_channeldef |
                                            std::views::enumerate,
                                        list_pion_cut | std::views::enumerate) |
          std::views::transform([&](auto &&tup) {
            auto &&[count1_name_id, count2_pion_cut] = tup;
+
            auto &&[count1, name_id] = count1_name_id;
            auto &&[count2, pion_cut] = count2_pion_cut;
 
@@ -181,7 +180,7 @@ auto plot_channels_pi0(
              return std::make_tuple(
                  name + " " + pion_pretty_name(pion_name),
                  make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
-                            bins.value(), variable, name + "_" + pion_name),
+                            bins, variable, name + "_" + pion_name),
                  count1 * 2 + count2);
            else
              return std::make_tuple(
@@ -399,22 +398,20 @@ int main(int argc, char *argv[]) {
 
   // per channel stacked plots
   // pn 0pi
-  auto plots_0pi_IApN = plot_channels_0pi(
-      rdf_0pi_after_cut, "IApN", std::make_optional(get_binning_IApN_0pi()));
+  auto plots_0pi_IApN =
+      plot_channels_0pi(rdf_0pi_after_cut, "IApN", get_binning_IApN_0pi());
 
   // dat 0pi
-  auto plots_0pi_dalphat =
-      plot_channels_0pi(rdf_0pi_after_cut, "dalphat",
-                        std::make_optional(get_binning_dalphat_0pi()));
+  auto plots_0pi_dalphat = plot_channels_0pi(rdf_0pi_after_cut, "dalphat",
+                                             get_binning_dalphat_0pi());
 
   // pn pi0
-  auto plots_pi0_IApN = plot_channels_pi0(
-      rdf_pi0_after_cut, "IApN", std::optional(get_binning_IApN_pi0()));
+  auto plots_pi0_IApN =
+      plot_channels_pi0(rdf_pi0_after_cut, "IApN", get_binning_IApN_pi0());
 
   // dat pi0
-  auto plots_pi0_dalphat =
-      plot_channels_pi0(rdf_pi0_after_cut, "dalphat",
-                        std::make_optional(get_binning_dalphat_pi0()));
+  auto plots_pi0_dalphat = plot_channels_pi0(rdf_pi0_after_cut, "dalphat",
+                                             get_binning_dalphat_pi0());
 
   // auto plots_pi0_W = get_channel_list_pi0(rdf_pi0_after_cut, "W");
   std::list<std::string> vars{"W", "Q2", "xBj"};

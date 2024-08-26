@@ -285,24 +285,31 @@ void inline IniColorCB() {
   // http://www.somersault1824.com/tips-for-designing-scientific-figures-for-color-blind-readers/
   Int_t id = fgkColorBase + 1;
   // new TColor(id++, 0. / 255., 0. / 255., 0. / 255., "CB1_Black", 1.0);
-  // QE
-  new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
-  new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
-  // RES
-  new TColor(id++, 255. / 255., 182. / 255., 119. / 255., "CB5_BabyPink", 1.0);
-  new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "CB4_HotPink", 1.0);
-  // DIS
-  new TColor(id++, 73. / 255., 0. / 255., 146. / 255., "CB6_Purple", 1.0);
-  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
-  // 2p2h
-  new TColor(id++, 0. / 255., 109. / 255., 219. / 255., "CB7_RoyalBlue", 1.0);
-  new TColor(id++, 109. / 255., 182. / 255., 255. / 255., "CB9_BlueGrey", 1.0);
-
   // 2pibg
-  // new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
-            //  1.0);
+  // new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
+  // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
+  // new TColor(id++, 0. / 255., 219. / 255., 219. / 255., "CB3_Teal", 1.0);
   new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
   new TColor(id++, 146. / 255., 73. / 255., 0. / 255., "CB12_Tan", 1.0);
+  // QE
+  new TColor(id++, 73. / 255., 0. / 255., 146. / 255., "CB6_Purple", 1.0);
+  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
+  // RES
+  // new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
+  // new TColor(id++, 146. / 255., 73. / 255., 0. / 255., "CB12_Tan", 1.0);
+  new TColor(id++, 255. / 255., 255. / 255., 109. / 255., "CB15_SunFlower",
+             1.0);
+  new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB13_Orange", 1.0);
+  // DIS
+  new TColor(id++, 0. / 255., 109. / 255., 219. / 255., "CB7_RoyalBlue", 1.0);
+  new TColor(id++, 109. / 255., 182. / 255., 255. / 255., "CB9_BlueGrey", 1.0);
+  // 2p2h
+  new TColor(id++, 255. / 255., 182. / 255., 119. / 255., "CB5_BabyPink", 1.0);
+  new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "CB4_HotPink", 1.0);
+
+  // new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
+  //  1.0);
+
   new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB13_Orange", 1.0);
   new TColor(id++, 36. / 255., 255. / 255., 36. / 255., "CB14_DayGleen", 1.0);
   new TColor(id++, 255. / 255., 255. / 255., 109. / 255., "CB15_SunFlower",
