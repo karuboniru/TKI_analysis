@@ -18,12 +18,6 @@
 #include <string>
 #include <vector>
 
-struct plot_data {
-  int bins;
-  double xmin, xmax;
-  std::string name;
-};
-
 plot_data get_info(std::string varname) {
   if (varname == "dalphat") {
     return plot_data{80, 0., 180., "#delta#alpha_{T}"};

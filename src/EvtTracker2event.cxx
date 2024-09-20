@@ -4,11 +4,11 @@
 
 ROOT::RDF::RNode TrackerPrepare(ROOT::RDF::RNode df) {
   return df
-      .Define("TKIEvent",
+      .Define("EventRecord",
               [](int StdHepN, const ROOT::RVec<int> &StdHepPdg,
                  const ROOT::RVec<int> &StdHepStatus,
                  const ROOT::RVec<double> &StdHepP4_) {
-                TKIEvent e{};
+                NeutrinoEvent e{};
                 for (int i = 0; i < StdHepN; i++) {
                   TLorentzVector p4{StdHepP4_[i * 4], StdHepP4_[i * 4 + 1],
                                     StdHepP4_[i * 4 + 2], StdHepP4_[i * 4 + 3]};

@@ -5,7 +5,7 @@
 #include <TLorentzVector.h>
 
 // CC1π+Xp
-bool acceptEventT2K(const TKIEvent &e) {
+bool acceptEventT2K(const NeutrinoEvent &e) {
   // no Meson
   for (auto &&id : e.get_ids_post()) {
     auto absid = std::abs(id);
@@ -29,7 +29,7 @@ bool acceptEventT2K(const TKIEvent &e) {
 ROOT::RDF::RNode DoTKICut_T2K(ROOT::RDF::RNode df) {
   return df
       .Define("good_muon",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> muons{};
                 for (auto &&[id, particle] : event.post_range(13)) {
                   auto p = particle.P();
@@ -40,12 +40,12 @@ ROOT::RDF::RNode DoTKICut_T2K(ROOT::RDF::RNode df) {
                 }
                 return muons;
               },
-              {"TKIEvent"})
+              {"EventRecord"})
       .Filter(
           [](ROOT::RVec<TLorentzVector> &muons) { return muons.size() == 1; },
           {"good_muon"}, "1 mu-")
       .Define("good_proton",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> protons{};
                 for (auto &&[id, particle] : event.post_range(2212)) {
                   auto p = particle.P();
@@ -56,14 +56,14 @@ ROOT::RDF::RNode DoTKICut_T2K(ROOT::RDF::RNode df) {
                 }
                 return protons;
               },
-              {"TKIEvent"})
+              {"EventRecord"})
       .Filter(
           [](ROOT::RVec<TLorentzVector> &protons) {
             return protons.size() >= 1;
           },
           {"good_proton"}, "at least one proton")
       .Define("good_pion",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> pions{};
                 for (auto &&[id, particle] : event.post_range(211)) {
                   auto p = particle.P();
@@ -74,9 +74,62 @@ ROOT::RDF::RNode DoTKICut_T2K(ROOT::RDF::RNode df) {
                 }
                 return pions;
               },
-              {"TKIEvent"})
+              {"EventRecord"})
       .Filter(
           [](ROOT::RVec<TLorentzVector> &pions) { return pions.size() == 1; },
           {"good_pion"}, "1 pi+")
-      .Filter(acceptEventT2K, {"TKIEvent"}, "no other meson");
+      .Filter(acceptEventT2K, {"EventRecord"}, "no other meson");
+}
+
+bool acceptEventT2K_STK(const NeutrinoEvent &e) {
+  // no Meson
+  for (auto &&id : e.get_ids_post()) {
+    auto absid = std::abs(id);
+    if (((absid > 99 && absid < 1000) || (absid == 22 || absid == 11) ||
+         (absid > 3000 && absid < 5000) || (absid == 2103) ||
+         (absid == 2203))) {
+      return false;
+    }
+  }
+  // if (e.count_post(211)!=1) return false;
+  return true;
+}
+
+ROOT::RDF::RNode DoTKICut_T2K_STK(ROOT::RDF::RNode df) {
+  return df
+      .Define("good_muon",
+              [](NeutrinoEvent &event) {
+                ROOT::RVec<TLorentzVector> muons{};
+                for (auto &&[id, particle] : event.post_range(13)) {
+                  auto p = particle.P();
+                  auto ctheta = particle.CosTheta();
+                  if (p > 0.250 && ctheta > -0.6) {
+                    muons.push_back(particle);
+                  }
+                }
+                return muons;
+              },
+              {"EventRecord"})
+      .Filter(
+          [](ROOT::RVec<TLorentzVector> &muons) { return muons.size() == 1; },
+          {"good_muon"}, "1 mu-")
+      .Filter([](NeutrinoEvent &event) { return event.count_post(2212) != 0; },
+              {"EventRecord"})
+      .Define("leading_proton_before_cut",
+              [](NeutrinoEvent &event) { return event.get_leading(2212); },
+              {"EventRecord"})
+      .Filter(
+          [](const TLorentzVector &proton) {
+            auto p = proton.P();
+            auto ctheta = proton.CosTheta();
+            return p > 0.450 && p < 1.0 && ctheta > 0.4;
+          },
+          {"leading_proton_before_cut"})
+
+      .Define("good_proton",
+              [](const TLorentzVector &proton) {
+                return ROOT::RVec<TLorentzVector>{proton};
+              },
+              {"leading_proton_before_cut"})
+      .Filter(acceptEventT2K_STK, {"EventRecord"}, "no other meson");
 }

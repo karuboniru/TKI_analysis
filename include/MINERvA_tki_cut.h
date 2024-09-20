@@ -7,7 +7,7 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 
-class TKIEvent;
+class NeutrinoEvent;
 
 // TLorentzVector get_full_hadron_MINERvAPi0(const TKIEvent &e);
 // TLorentzVector get_full_hadron_MINERvA0PI(const TKIEvent &e);

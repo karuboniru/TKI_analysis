@@ -1,23 +1,71 @@
 #pragma once
 #include <TH1.h>
 #include <TMatrixD.h>
+#include <TMatrixDSym.h>
 #include <array>
 
-std::array<double, 13> get_binning_IApN_pi0();
-std::array<double, 25> get_binning_IApN_0pi() ;
-std::array<double, 10> get_binning_dalphat_pi0();
-std::array<double, 13> get_binning_dalphat_0pi();
+namespace MINERvA_TKI {
+namespace pi0 {
+namespace IApN {
+constexpr size_t dimension = 12;
+std::array<double, dimension + 1> get_binning();
+const TH1D &get_hist();
+double do_chi2(TH1 *hist);
+const TMatrixDSym &get_cov();
+} // namespace IApN
 
-TH1D get_IApN_hist_pi0();
-TH1D get_dalphat_hist_pi0();
-TH1D get_IApN_hist_0pi();
-TH1D get_dalphat_hist_0pi();
-double do_chi2_dalphat_pi0(TH1 *hist);
-double do_chi2_IApN_pi0(TH1 *hist);
-double do_chi2_IApN_0pi(TH1 *hist);
-double do_chi2_dalphat_0pi(TH1 *hist) ;
+namespace dalphat {
+constexpr size_t dimension = 9;
+std::array<double, dimension + 1> get_binning();
+const TH1D &get_hist();
+double do_chi2(TH1 *hist);
+const TMatrixDSym &get_cov();
+} // namespace dalphat
+} // namespace pi0
 
-TMatrixT<double> get_cov_dalphat_pi0();
-TMatrixT<double> get_cov_IApN_pi0();
-TMatrixT<double> get_cov_dalphat_0pi();
-TMatrixT<double> get_cov_IApN_0pi();
+namespace ZeroPi {
+namespace IApN {
+constexpr size_t dimension = 24;
+std::array<double, dimension + 1> get_binning();
+const TH1D &get_hist();
+double do_chi2(TH1 *hist);
+const TMatrixDSym &get_cov();
+} // namespace IApN
+
+namespace dalphat {
+constexpr size_t dimension = 12;
+std::array<double, dimension + 1> get_binning();
+const TH1D &get_hist();
+double do_chi2(TH1 *hist);
+const TMatrixDSym &get_cov();
+} // namespace dalphat
+} // namespace ZeroPi
+} // namespace MINERvA_TKI
+
+namespace T2K_STK {
+constexpr size_t dimension = 8;
+const TH1D &get_hist();
+const TMatrixDSym &get_cov();
+std::array<double, dimension + 1> get_binning();
+double do_chi2(TH1 *hist);
+} // namespace T2K_STK
+
+namespace MicroBooNE {
+namespace pi0_momentum {
+constexpr size_t dimension = 8;
+std::array<double, dimension + 1> get_binning();
+const TH1D &get_hist();
+double do_chi2(TH1 *hist_smeared);
+const TMatrixDSym &get_cov();
+const TMatrixDSym &get_smear();
+} // namespace pi0_momentum
+
+namespace pi0_angular {
+constexpr size_t dimension = 7;
+std::array<double, dimension + 1> get_binning();
+const TH1D &get_hist();
+double do_chi2(TH1 *hist_smeared);
+const TMatrixDSym &get_cov();
+const TMatrixDSym &get_smear();
+} // namespace pi0_angular
+} // namespace MicroBooNE

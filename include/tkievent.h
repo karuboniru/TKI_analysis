@@ -22,7 +22,7 @@ private:
 template <typename U>
 equal_range_iterable(U &&, int) -> equal_range_iterable<U>;
 
-class TKIEvent {
+class NeutrinoEvent {
 public:
   size_t count_in(int) const;
   size_t count_out(int) const;

@@ -5,7 +5,7 @@
 #include <TLorentzVector.h>
 #include <TRandom.h>
 
-bool acceptEventMINERvAPi0(const TKIEvent &e) {
+bool acceptEventMINERvAPi0(const NeutrinoEvent &e) {
   for (auto &&id : e.get_ids_post()) {
     auto absid = std::abs(id);
     if ((id != 13) && (id != 2212) && (id != 2112) && (absid != 111) &&
@@ -19,7 +19,7 @@ bool acceptEventMINERvAPi0(const TKIEvent &e) {
   return true;
 }
 
-bool acceptEventMINERvA0PI(const TKIEvent &e) {
+bool acceptEventMINERvA0PI(const NeutrinoEvent &e) {
   for (auto &&id : e.get_ids_post()) {
     auto absid = std::abs(id);
     if ((id != 13) && (id != 2212) && (id != 2112) &&
@@ -36,7 +36,7 @@ bool acceptEventMINERvA0PI(const TKIEvent &e) {
 ROOT::RDF::RNode DoTKICut_MINERvA_pi0(ROOT::RDF::RNode df) {
   return df
       .Define("good_muon",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> muons{};
                 for (auto &&[id, particle] : event.post_range(13)) {
                   auto p = particle.P();
@@ -47,12 +47,12 @@ ROOT::RDF::RNode DoTKICut_MINERvA_pi0(ROOT::RDF::RNode df) {
                 }
                 return muons;
               },
-              {"TKIEvent"})
+              {"EventRecord"})
       .Filter(
           [](ROOT::RVec<TLorentzVector> &muons) { return muons.size() == 1; },
           {"good_muon"}, "1 mu-")
       .Define("good_proton",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> protons{};
                 for (auto &&[id, particle] : event.post_range(2212)) {
                   auto p = particle.P();
@@ -63,31 +63,31 @@ ROOT::RDF::RNode DoTKICut_MINERvA_pi0(ROOT::RDF::RNode df) {
                 }
                 return protons;
               },
-              {"TKIEvent"})
+              {"EventRecord"})
       .Filter(
           [](ROOT::RVec<TLorentzVector> &protons) {
             return protons.size() >= 1;
           },
           {"good_proton"}, "at least one proton")
       .Define("good_pion",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> pions{};
                 for (auto &&[id, particle] : event.post_range(111)) {
                   pions.push_back(particle);
                 }
                 return pions;
               },
-              {"TKIEvent"}) // all pi0(s) are good
+              {"EventRecord"}) // all pi0(s) are good
       .Filter(
           [](ROOT::RVec<TLorentzVector> &pions) { return pions.size() >= 1; },
           {"good_pion"}, "1+ pi0")
-      .Filter(acceptEventMINERvAPi0, {"TKIEvent"}, "no other meson");
+      .Filter(acceptEventMINERvAPi0, {"EventRecord"}, "no other meson");
 }
 
 ROOT::RDF::RNode DoTKICut_MINERvA0PI(ROOT::RDF::RNode df) {
   return df
       .Define("good_muon",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> muons{};
                 for (auto &&[id, particle] : event.post_range(13)) {
                   auto p = particle.P();
@@ -98,12 +98,12 @@ ROOT::RDF::RNode DoTKICut_MINERvA0PI(ROOT::RDF::RNode df) {
                 }
                 return muons;
               },
-              {"TKIEvent"})
+              {"EventRecord"})
       .Filter(
           [](ROOT::RVec<TLorentzVector> &muons) { return muons.size() == 1; },
           {"good_muon"}, "1 mu-")
       .Define("good_proton",
-              [](TKIEvent &event) {
+              [](NeutrinoEvent &event) {
                 ROOT::RVec<TLorentzVector> protons{};
                 for (auto &&[id, particle] : event.post_range(2212)) {
                   auto p = particle.P();
@@ -114,13 +114,13 @@ ROOT::RDF::RNode DoTKICut_MINERvA0PI(ROOT::RDF::RNode df) {
                 }
                 return protons;
               },
-              {"TKIEvent"})
+              {"EventRecord"})
       .Filter(
           [](ROOT::RVec<TLorentzVector> &protons) {
             return protons.size() >= 1;
           },
           {"good_proton"}, "at least one proton")
-      .Filter(acceptEventMINERvA0PI, {"TKIEvent"}, "no other meson");
+      .Filter(acceptEventMINERvA0PI, {"EventRecord"}, "no other meson");
 }
 
 ROOT::RDF::RNode vars_define(ROOT::RDF::RNode df) {
@@ -147,7 +147,26 @@ ROOT::RDF::RNode vars_define(ROOT::RDF::RNode df) {
                 auto q = InitNeutrino - PrimaryLepton;
                 return -q.Mag2() / (2 * InitNucleon.Dot(q));
               },
-              {"InitNeutrino", "PrimaryLepton", "InitNucleon"});
+              {"InitNeutrino", "PrimaryLepton", "InitNucleon"})
+      .Define(
+          "p_mu",
+          [](const TLorentzVector &PrimaryLepton) { return PrimaryLepton.P(); },
+          {"PrimaryLepton"})
+      .Define("theta_mu",
+              [](const TLorentzVector &PrimaryLepton) {
+                return PrimaryLepton.Theta() / M_PI * 180.;
+              },
+              {"PrimaryLepton"})
+      .Define("p_p",
+              [](const TLorentzVector &leading_proton) {
+                return leading_proton.P();
+              },
+              {"leading_proton"})
+      .Define("theta_p",
+              [](const TLorentzVector &leading_proton) {
+                return leading_proton.Theta() / M_PI * 180.;
+              },
+              {"leading_proton"});
 }
 
 ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
@@ -182,8 +201,18 @@ ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
                   {"leading_proton", "leading_pion"})
           .Alias("neutrino_p", "InitNeutrino")
           .Alias("muon_p", "PrimaryLepton")
+          .Define("p_pion",
+                  [](const TLorentzVector &leading_pion) {
+                    return leading_pion.P();
+                  },
+                  {"leading_pion"})
+          .Define("theta_pion",
+                  [](const TLorentzVector &leading_pion) {
+                    return leading_pion.Theta() / M_PI * 180.;
+                  },
+                  {"leading_pion"})
           .Define("TKIVars",
-                  [](TKIEvent &e, const TLorentzVector &neutrino_p,
+                  [](NeutrinoEvent &e, const TLorentzVector &neutrino_p,
                      const TLorentzVector &muon_p,
                      const TLorentzVector &full_hadron) {
                     auto ret =
@@ -193,7 +222,7 @@ ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
                     }
                     return ret;
                   },
-                  {"TKIEvent", "neutrino_p", "muon_p", "full_hadron"}));
+                  {"EventRecord", "neutrino_p", "muon_p", "full_hadron"}));
 }
 
 ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df) {
@@ -213,7 +242,7 @@ ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df) {
           .Alias("neutrino_p", "InitNeutrino")
           .Alias("muon_p", "PrimaryLepton")
           .Define("TKIVars",
-                  [](TKIEvent &e, TLorentzVector &neutrino_p,
+                  [](NeutrinoEvent &e, TLorentzVector &neutrino_p,
                      TLorentzVector &muon_p, TLorentzVector &full_hadron) {
                     auto ret =
                         getCommonTKI(12, 6, &neutrino_p, &muon_p, &full_hadron);
@@ -222,14 +251,14 @@ ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df) {
                     }
                     return ret;
                   },
-                  {"TKIEvent", "neutrino_p", "muon_p", "leading_proton"})
+                  {"EventRecord", "neutrino_p", "muon_p", "leading_proton"})
           .Define("dpl_alt",
-                  [](TLorentzVector muon, TLorentzVector hadron) {
+                  [](const TLorentzVector &muon, const TLorentzVector &hadron) {
                     return getdpLMassless(muon, hadron);
                   },
                   {"muon_p", "leading_proton"})
           .Define("factor",
-                  [](TLorentzVector muon, TLorentzVector hadron) {
+                  [](const TLorentzVector &muon, const TLorentzVector &hadron) {
                     return get_factor_pdv(muon, hadron);
                   },
                   {"muon_p", "leading_proton"}));

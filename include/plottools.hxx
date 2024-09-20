@@ -251,69 +251,65 @@ auto normalize_slice(T &&hist, bool on_axis_x = true) {
   return hist_norm;
 }
 
-inline std::unique_ptr<int[]> GetColorArray(const int minsize) {
-  const int col[] = {
-      1005, 1009, 1002, kOrange, 1014,       1007, 1003, 1015, 1008, 1004, 1006,
-      1010, 1012, 1013, 1011,    kGreen + 3, 1008, 1009, 1002, 1011, 1014, 1007,
-      1003, 1015, 1005, 1008,    1009,       1002, 1011, 1014, 1007, 1003, 1015,
-      1005, 1008, 1009, 1002,    1011,       1014, 1007, 1003, 1015, 1005, 1008,
-      1009, 1002, 1011, 1014,    1007,       1003, 1015, 1005};
+// inline std::unique_ptr<int[]> GetColorArray(const int minsize) {
+//   const int col[] = {
+//       1005, 1009, 1002, kOrange, 1014,       1007, 1003, 1015, 1008, 1004,
+//       1006, 1010, 1012, 1013, 1011,    kGreen + 3, 1008, 1009, 1002, 1011,
+//       1014, 1007, 1003, 1015, 1005, 1008,    1009,       1002, 1011, 1014,
+//       1007, 1003, 1015, 1005, 1008, 1009, 1002,    1011,       1014, 1007,
+//       1003, 1015, 1005, 1008, 1009, 1002, 1011, 1014,    1007,       1003,
+//       1015, 1005};
 
-  const int nc = sizeof(col) / sizeof(int);
-  if (nc < minsize) {
-    printf("style::GetColorArray too small size %d %d\n", nc, minsize);
-    exit(1);
-  }
-  // int *outcl = new int[nc];
-  auto outcl = std::make_unique<int[]>(nc);
-  for (int ii = 0; ii < nc; ii++) {
-    outcl[ii] = col[ii];
-  }
+//   const int nc = sizeof(col) / sizeof(int);
+//   if (nc < minsize) {
+//     printf("style::GetColorArray too small size %d %d\n", nc, minsize);
+//     exit(1);
+//   }
+//   // int *outcl = new int[nc];
+//   auto outcl = std::make_unique<int[]>(nc);
+//   for (int ii = 0; ii < nc; ii++) {
+//     outcl[ii] = col[ii];
+//   }
 
-  return outcl;
-}
+//   return outcl;
+// }
+
 const int fgkColorBase = 1500;
-void inline IniColorCB() {
-  static bool kset = false;
-  if (kset) {
-    printf("style::IniColorCB arleady set\n");
-    return;
-  } else {
-    printf("style::IniColorCB creating new color\n");
-  }
 
-  // http://www.somersault1824.com/tips-for-designing-scientific-figures-for-color-blind-readers/
-  Int_t id = fgkColorBase + 1;
-  // new TColor(id++, 0. / 255., 0. / 255., 0. / 255., "CB1_Black", 1.0);
-  // 2pibg
-  // new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
-  // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
-  // new TColor(id++, 0. / 255., 219. / 255., 219. / 255., "CB3_Teal", 1.0);
-  new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
-  new TColor(id++, 146. / 255., 73. / 255., 0. / 255., "CB12_Tan", 1.0);
-  // QE
-  new TColor(id++, 73. / 255., 0. / 255., 146. / 255., "CB6_Purple", 1.0);
-  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
-  // RES
-  // new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
-  // new TColor(id++, 146. / 255., 73. / 255., 0. / 255., "CB12_Tan", 1.0);
-  new TColor(id++, 255. / 255., 255. / 255., 109. / 255., "CB15_SunFlower",
-             1.0);
-  new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB13_Orange", 1.0);
-  // DIS
-  new TColor(id++, 0. / 255., 109. / 255., 219. / 255., "CB7_RoyalBlue", 1.0);
-  new TColor(id++, 109. / 255., 182. / 255., 255. / 255., "CB9_BlueGrey", 1.0);
-  // 2p2h
-  new TColor(id++, 255. / 255., 182. / 255., 119. / 255., "CB5_BabyPink", 1.0);
-  new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "CB4_HotPink", 1.0);
+void IniColorCB();
 
-  // new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
-  //  1.0);
+THStack scale_stack(THStack &stack, double scale);
 
-  new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB13_Orange", 1.0);
-  new TColor(id++, 36. / 255., 255. / 255., 36. / 255., "CB14_DayGleen", 1.0);
-  new TColor(id++, 255. / 255., 255. / 255., 109. / 255., "CB15_SunFlower",
-             1.0);
+class TH1;
+#include <ROOT/RResultPtr.hxx>
 
-  kset = true;
-}
+std::tuple<THStack, TLegend> build_stack_from_list(
+    std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>, long>> list,
+    double threshold);
+
+std::tuple<THStack, TLegend> build_stack_from_list(
+    std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>>> list,
+    double threshold);
+
+std::tuple<THStack, TLegend> build_stack_from_list(
+    std::vector<std::tuple<std::string, std::unique_ptr<TH1D>, long>> &list,
+    double threshold);
+
+struct plot_data {
+  int bins;
+  double xmin, xmax;
+  std::string name;
+  std::string ytitle;
+  double ymax_0pi{}, ymax_pi0{};
+  double xmax_0pi{}, xmax_pi0{};
+};
+
+using plot_ptr_t =
+    std::variant<TH1 *, TLegend *, THStack *, ROOT::RDF::RResultPtr<TH1D>,
+                 ROOT::RDF::RResultPtr<TH1>, TLatex *>;
+void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
+             const std::string &filename, std::string_view ytitle,
+             std::string_view xtitle, std::array<double, 4> legend_pos,
+             double xmax = 0., std::string legend_head = "",
+             std::string histopt = "HIST", double ymax = 0.);
+void IniColorCB2pibg();

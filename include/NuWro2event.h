@@ -9,8 +9,8 @@
 #include <ROOT/RDataFrame.hxx>
 #include <TLorentzVector.h>
 
-TKIEvent NuWro2event(event &e1);
-TKIEvent NuWro2event_nofsi(event &e1);
+NeutrinoEvent NuWro2event(event &e1);
+NeutrinoEvent NuWro2event_nofsi(event &e1);
 
 ROOT::RDF::RNode NuWroPrepare(ROOT::RDF::RNode df, bool fsi = true);
 

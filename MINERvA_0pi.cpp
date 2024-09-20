@@ -58,11 +58,6 @@ make_plots(T &&df_in, std::string variable = "dtl", std::string prefix = "") {
   return plots;
 }
 
-struct plot_data {
-  int bins;
-  double xmin, xmax;
-  std::string name;
-};
 
 plot_data get_info(std::string varname) {
   if (varname == "dalphat") {
@@ -220,14 +215,14 @@ int main(int argc, char *argv[]) {
   {
     auto plots_QE = make_plots(
         d_TKIResult.Filter(
-            [](TKIEvent &event) {
+            [](NeutrinoEvent &event) {
               return event.count_out(2212) + event.count_out(2112) == 1;
             },
             {"TKIEvent"}),
         "1p1h");
     auto plots_2p2h = make_plots(
         d_TKIResult.Filter(
-            [](TKIEvent &event) {
+            [](NeutrinoEvent &event) {
               return event.count_out(2212) + event.count_out(2112) > 1;
             },
             {"TKIEvent"}),
