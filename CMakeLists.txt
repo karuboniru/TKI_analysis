@@ -38,7 +38,7 @@ endif()
 include_directories(${ROOT_INCLUDE_DIRS} include)
 
 
-set(GLOB Dict_HEADERS include/tkigeneral.h
+set(Dict_HEADERS include/tkigeneral.h
                       include/tkievent.h)
 set(COMMON_TOOL src/dochi2.cxx 
                 src/expdata.cxx 
