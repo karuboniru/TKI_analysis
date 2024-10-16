@@ -11,8 +11,6 @@ find_package(Boost REQUIRED COMPONENTS system)
 # Include Boost headers
 include_directories(${Boost_INCLUDE_DIRS})
 
-
-
 # Locate CERN ROOT
 find_package(ROOT REQUIRED COMPONENTS RIO Tree)
 
@@ -26,32 +24,48 @@ else()
   set(NUWRO_DIR $ENV{NUWRO})
 endif()
 
-if (NOT NUWRO_DIR)
-  # message(FATAL_ERROR "Please set NUWRO environment variable to the path to the NuWro installation")
-  set(NUWRO_DIR /var/home/yan/neutrino/nuwro/nuwro.nuwro_21.09.2)
+# if (NOT NUWRO_DIR)
+#   # message(FATAL_ERROR "Please set NUWRO environment variable to the path to the NuWro installation")
+#   set(NUWRO_DIR /var/home/yan/neutrino/nuwro/nuwro.nuwro_21.09.2)
+# endif()
+if (NUWRO_DIR)
+  add_library(EVENT1 SHARED IMPORTED)
+  set_property(TARGET EVENT1 PROPERTY IMPORTED_LOCATION ${NUWRO_DIR}/bin/event1.so)
+  include_directories(${NUWRO_DIR}/src ${NUWRO_DIR}/include)
 endif()
 
-add_library(EVENT1 SHARED IMPORTED)
-set_property(TARGET EVENT1 PROPERTY IMPORTED_LOCATION ${NUWRO_DIR}/bin/event1.so)
-
 # Include ROOT and NuWro headers
-include_directories(${ROOT_INCLUDE_DIRS} ${NUWRO_DIR}/src include)
-
-# Find all .cxx files in the src directory
-file(GLOB SOURCES src/*.cxx)
-file(GLOB HEADERS include/*.h)
+include_directories(${ROOT_INCLUDE_DIRS} include)
 
 
-#  ${SOURCES} -> libanalysis.so
-add_library(analysis STATIC ${SOURCES})
-target_link_libraries(analysis PRIVATE EVENT1 ROOT::Physics ROOT::ROOTDataFrame)
-root_generate_dictionary(G__Dict ${HEADERS} MODULE analysis LINKDEF LinkDef.h)
+set(GLOB Dict_HEADERS include/tkigeneral.h
+                      include/tkievent.h)
+set(COMMON_TOOL src/dochi2.cxx 
+                src/expdata.cxx 
+                src/MINERvA_tki_cut.cxx 
+                src/plottools.cxx 
+                src/T2K_tki_cut.cxx
+                src/tkievent.cxx
+                src/tkigeneral.cxx)
+set(GIBUU_TOOL src/EvtTracker2event.cxx)
+set(NuWro_TOOL src/NuWro2event.cxx )
+
+add_library(analysis SHARED ${COMMON_TOOL} ${GIBUU_TOOL})
+if(NUWRO_DIR)
+  target_sources(analysis PRIVATE ${NuWro_TOOL})
+endif()
+target_link_libraries(analysis PRIVATE ROOT::Physics ROOT::ROOTDataFrame)
+if(NUWRO_DIR)
+  target_link_libraries(analysis PRIVATE EVENT1)
+endif()
+root_generate_dictionary(G__Dict ${Dict_HEADERS} MODULE analysis LINKDEF LinkDef.h)
+
 
 set(GENERAL_LIBS ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree  ROOT::Hist ROOT::Gpad 
-boost_program_options
+    boost_program_options
 )
 
-# Add the main executable
+if(NUWRO_DIR)
 add_executable(T2K T2K.cpp)
 
 # Link all the object files to the main executable
@@ -108,15 +122,6 @@ target_link_libraries(MINERvA_all_gibuu PRIVATE
   analysis
 )
 
-
-add_executable(gibuu2root gibuu2root.cpp)
-
-# Link all the object files to the main executable
-target_link_libraries(gibuu2root PRIVATE 
-  ${GENERAL_LIBS}
-)
-
-
 add_executable(rawq2 rawq2.cpp)
 
 # Link all the object files to the main executable
@@ -134,6 +139,17 @@ target_link_libraries(rawq2_gibuu PRIVATE
   EVENT1
   analysis
 )
+
+
+endif()
+
+add_executable(gibuu2root gibuu2root.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(gibuu2root PRIVATE 
+  ${GENERAL_LIBS}
+)
+
 
 
 add_executable(minerva_all_gibuu_plot minerva_all_gibuu_plot.cpp)
