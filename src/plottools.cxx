@@ -143,7 +143,7 @@ std::tuple<THStack, TLegend> build_stack_from_list(
 }
 
 std::tuple<THStack, TLegend> build_stack_from_list(
-    std::vector<std::tuple<std::string, std::unique_ptr<TH1D>, long>> & list,
+    std::vector<std::tuple<std::string, std::unique_ptr<TH1D>, long>> &list,
     double threshold) {
   IniColorCB();
   std::tuple<THStack, TLegend> tup;
@@ -203,7 +203,7 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
              const std::string &filename, std::string_view ytitle,
              std::string_view xtitle, std::array<double, 4> legend_pos,
              double xmax, std::string legend_head, std::string histopt,
-             double ymax) {
+             double ymax, override_margin m) {
   auto plot = [](TNamed &obj, std::string_view option) {
     std::cout << std::format("Drawing obj {:5} with option {:5}", obj.GetName(),
                              option)
@@ -213,6 +213,14 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
 
   auto c = getCanvas();
   PadSetup(c.get());
+  if (m.left)
+    c->SetLeftMargin(m.left);
+  if (m.right)
+    c->SetRightMargin(m.right);
+  if (m.top)
+    c->SetTopMargin(m.top);
+  if (m.bottom)
+    c->SetBottomMargin(m.bottom);
   std::unique_ptr<TLegend> leg_copy;
   for (auto [id, obj] : plot_ptrs_list | std::views::enumerate) {
     // std::string hist_draw_opt = id == 0 ? "E0 X1" : "HISTC same";
@@ -314,7 +322,7 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
               arg->SetX(legend_pos[2] - 0.05);
               arg->SetY(legend_pos[3] - 0.05);
             } else {
-              arg->SetX(legend_pos[0] - 0.35);
+              arg->SetX(legend_pos[0] - 0.45);
               arg->SetY(legend_pos[3] - 0.05);
             }
             // arg->Draw();

@@ -21,6 +21,7 @@
 #include <TStyle.h>
 #include <TSystem.h>
 #include <TVector3.h>
+#include <algorithm>
 #include <boost/program_options.hpp>
 
 #include <cmath>
@@ -30,7 +31,39 @@
 #include <string_view>
 #include <vector>
 
-plot_data get_info(const std::string &varname) { return {}; }
+plot_data get_info(const std::string &varname) {
+  if (varname == "dalphat") {
+    return plot_data{.bins = 30,
+                     .xmin = 0.,
+                     .xmax = 180.,
+                     .name = "#delta#it{#alpha}_{T} (degree)",
+                     .ytitle = "d#sigma/d#delta#it{#alpha}_{T} (10^{#minus 38} "
+                               "cm^{2}/degree/nucleon)"};
+  }
+  if (varname == "IApN") {
+    return plot_data{.bins = 30,
+                     .xmin = 0.,
+                     .xmax = 0.8,
+                     .name = "#it{p}_{N} (GeV/#it{c})",
+                     .ytitle = "d#sigma/d#it{p}_{N} (10^{#minus 38} "
+                               "cm^{2}/GeV/#it{c}/nucleon)"};
+  }
+  if (varname == "dpL") {
+    return plot_data{
+        .bins = 30, .xmin = -1., .xmax = 1., .name = "#delta p_{L}"};
+  }
+  if (varname == "W") {
+    return plot_data{.bins = 60,
+                     .xmin = 0.7,
+                     .xmax = 2.8,
+                     .name = "#it{W} (GeV)",
+                     .ytitle =
+                         "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
+                     .ymax_0pi = 0.15};
+  }
+
+  return {};
+}
 
 template <typename T, size_t N>
 ROOT::RDF::RResultPtr<TH1> make_plots(T &&df_in, std::array<double, N> bins,
@@ -84,7 +117,7 @@ const std::vector<std::tuple<std::string, std::function<bool(int)>>>
     };
 
 template <typename T, size_t N = 0>
-auto plot_channels(T &&df_in, std::string variable,
+auto plot_channels(T df_in, std::string variable,
                    std::array<double, N> bins = std::array<double, 0>{}) {
   return list_channel_channeldef | std::views::enumerate |
          std::views::transform([&](auto &&name_id_count) {
@@ -181,6 +214,15 @@ int main(int argc, char **argv) {
           .Define("costh_pi",
                   [](TLorentzVector &pion) { return pion.Vect().CosTheta(); },
                   {"pion_mom"})
+          .Define("W",
+                  [](const TLorentzVector &InitNeutrino,
+                     const TLorentzVector &PrimaryLepton,
+                     const TLorentzVector &InitNucleon) {
+                    auto had_system =
+                        InitNucleon + InitNeutrino - PrimaryLepton;
+                    return had_system.M();
+                  },
+                  {"InitNeutrino", "PrimaryLepton", "InitNucleon"})
       // .Define("proton",
       //         [](NeutrinoEvent &e) {
       //           ROOT::RVec<TLorentzVector> p;
@@ -228,9 +270,16 @@ int main(int argc, char **argv) {
                                             MicroBooNE::pi0_angular::dimension,
                                             pi0_angular_binning.data()},
                                            "costh_pi", "weight");
+
+  auto vars = std::to_array({"W"});
+  auto var_plots = vars | std::views::transform([&](std::string name) {
+                     return plot_channels(data_cut, std::move(name));
+                   }) |
+                   std::ranges::to<std::vector>();
+
   ////////////////////////
 
-  std::cout << "Finished data preparation" << std::endl;
+  std::cout << "Finished data preparation\n";
 
   ////////////////////////
   auto pi0_momentum_hist_smeared = smear_prediction(
@@ -242,6 +291,21 @@ int main(int argc, char **argv) {
     pi0_momentum_hist_smeared.Scale(scale_factor, "WIDTH");
     pi0_angular_hist_smeared.Scale(scale_factor, "WIDTH");
   }
+
+  auto xsec_inted = pi0_angular_hist_smeared.Integral("WIDTH");
+
+  std::ranges::for_each(var_plots, [&](auto &&tup) {
+    std::ranges::for_each(tup, [&](auto &&tup1) {
+      // auto &&[_, hist, __] = tup1;
+      auto &&hist = std::get<1>(tup1);
+      hist->Scale(1. / n_runs / 10, "WIDTH");
+    });
+  });
+
+  auto vars_stack = var_plots | std::views::transform([&](auto &&list) {
+                      return build_stack_from_list(list, 0.05 * xsec_inted);
+                    }) |
+                    std::ranges::to<std::vector>();
 
   // auto scale_list = [&](auto &&list) {
   //   for (auto &&[name, hist, _] : list) {
@@ -273,9 +337,9 @@ int main(int argc, char **argv) {
   // scale_list(pi0_angular_plot_list);
 
   auto &&[stack_momentum, legend_momentum] =
-      build_stack_from_list(pi0_plot_list_smeared, 0);
+      build_stack_from_list(pi0_plot_list_smeared, 0.01 * xsec_inted);
   auto &&[stack_angular, legend_angular] =
-      build_stack_from_list(pi0_angular_plot_list_smeared, 0);
+      build_stack_from_list(pi0_angular_plot_list_smeared, 0.01 * xsec_inted);
 
   auto pi0_momentum_chi2 =
       MicroBooNE::pi0_momentum::do_chi2(&pi0_momentum_hist_smeared);
@@ -304,8 +368,9 @@ int main(int argc, char **argv) {
           "mom",
           "d#sigma/d#it{p}_{#pi^{0}} (#times 10^{#minus 38} "
           "cm^{2}/GeV/#it{c}/nucleon)",
-          "#it{p}_{#pi^{0}} (GeV/#it{c})", {.55, .45, .85, .9}, 0.,
-          form_legend(&hist_momentum, pi0_momentum_chi2));
+          "#it{p}_{#pi^{0}} (GeV/#it{c})", {.65, .45, .95, .9}, 0.,
+          form_legend(&hist_momentum, pi0_momentum_chi2), "HIST", 0,
+          {.top = 0.04, .bottom = 0.12});
 
   do_plot({&hist_angular, &pi0_angular_hist_smeared, &stack_angular,
            &legend_angular, latex.get()},
@@ -313,7 +378,16 @@ int main(int argc, char **argv) {
           "d#sigma/dcos #theta_{#pi^{0}} (#times 10^{#minus 38} "
           "cm^{2}/rad/nucleon)",
           "cos #theta_{#pi^{0}} (rad)", {.15, .55, .55, .85}, 0.,
-          form_legend(&hist_angular, pi0_angular_chi2));
+          form_legend(&hist_angular, pi0_angular_chi2), "HIST", 0,
+          {.top = 0.06, .bottom = 0.12});
+
+  for (auto &&[name, tup] : std::views::zip(vars, vars_stack)) {
+    auto &&[stack, legend] = tup;
+    auto plotobj = get_info(name);
+    do_plot({&stack, &legend, latex.get()}, name, plotobj.ytitle, plotobj.name,
+            {.7, .55, .9, .95}, plotobj.xmax, "MicroBooNE CC #pi^{0}", "HIST",
+            plotobj.ymax_0pi, {.top = 0.04, .bottom = 0.12});
+  }
 
   return 0;
 }

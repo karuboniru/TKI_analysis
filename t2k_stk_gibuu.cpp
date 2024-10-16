@@ -209,8 +209,11 @@ auto plot_channels_pi0(T &&df_in, std::string variable,
 int main(int argc, char *argv[]) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
-  desc.add_options()("input-files", po::value<std::vector<std::string>>(),
-                     "Input files")
+  desc.add_options() //
+      ("input-files", po::value<std::vector<std::string>>(),
+       "Input files") //
+      // ("add-label", po::value<std::string>()->default_value(""),
+      //  "Additional label")
       //                (
       // "run-tag", po::value<std::string>()->default_value(""),
       // "Run tag")
@@ -261,14 +264,14 @@ int main(int argc, char *argv[]) {
 
   std::list<ROOT::RDF::RResultPtr<TH1>> plots{};
 
-  auto pred_all_dalphat_0pi = plots.emplace_back(make_plots(
-      rdf_0pi_after_cut, T2K_STK::get_binning(), "dalphat", "0pi"));
+  auto pred_all_dalphat_0pi = plots.emplace_back(
+      make_plots(rdf_0pi_after_cut, T2K_STK::get_binning(), "dalphat", "0pi"));
 
   // per channel stacked plots
 
   // dat 0pi
-  auto plots_0pi_dalphat = plot_channels_0pi(rdf_0pi_after_cut, "dalphat",
-                                             T2K_STK::get_binning());
+  auto plots_0pi_dalphat =
+      plot_channels_0pi(rdf_0pi_after_cut, "dalphat", T2K_STK::get_binning());
 
   std::list<std::string> vars{"W",        "Q2",  "xBj",    "p_mu",
                               "theta_mu", "p_p", "theta_p"};
@@ -324,7 +327,7 @@ int main(int argc, char *argv[]) {
   auto chi2_dalphat_0pi = T2K_STK::do_chi2(pred_all_dalphat_0pi.GetPtr());
 
   // std::cout << "chi2_IApN_0pi " << chi2_IApN_0pi << std::endl;
-  std::cout << "chi2_dalphat_0pi " << chi2_dalphat_0pi << std::endl;
+  std::cout << "chi2_dalphat_0pi " << chi2_dalphat_0pi << '\n';
   auto form_legend = [&](TH1 *hist, double chi2) -> std::string {
     // return std::string{"GiBUU"} + " #chi^{2}/NDF = " + std::to_string(chi2);
     std::stringstream ss;
@@ -361,14 +364,14 @@ int main(int argc, char *argv[]) {
           "dalphat_0pi", get_info("dalphat").ytitle, get_info("dalphat").name,
           {0.15, 0.6, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_0pi, chi2_dalphat_0pi), "HISTC",
-          2e-3);
+          2e-3, {.top = 0.06, .bottom = 0.12});
 
   for (auto &&[name, list] : std::views::zip(vars, stacked_vars_0pi)) {
     auto &&[stack, leg] = list;
     auto plot_ent = get_info(name);
     do_plot({&stack, &leg, latex.get()}, name + "_0pi", plot_ent.ytitle,
-            plot_ent.name, {0.65, 0.55, 0.95, 0.9}, 0., "T2K", "HIST",
-            plot_ent.ymax_0pi);
+            plot_ent.name, {0.75, 0.55, 0.95, 0.9}, 0., "T2K", "HIST",
+            plot_ent.ymax_0pi, {.top = 0.06, .bottom = 0.12});
   }
   // for (auto &&[name, list] : std::views::zip(vars, stacked_vars_pi0)) {
   //   auto &&[stack, leg] = list;

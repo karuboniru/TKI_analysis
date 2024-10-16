@@ -22,7 +22,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <fstream>
 #include <functional>
+#include <print>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -65,9 +67,13 @@ const std::array<
 const std::array<std::tuple<std::string, std::function<bool(int)>>, 2>
     interaction_cut{
         std::tuple<std::string, std::function<bool(int)>>{
-            "2#kern[0.2]{#pi}BG", [](int c) { return c == 37; }},
+            "2#kern[0.2]{#pi} non-BG", [](int c) { return c != 37; }},
         std::tuple<std::string, std::function<bool(int)>>{
-            "non-2#kern[0.2]{#pi}BG", [](int c) { return c != 37; }}};
+            "2#kern[0.2]{#pi}BG", [](int c) { return c == 37; }},
+    };
+
+const auto idlist =
+    std::to_array<int>({2, 3, 4, 7, 10, 16, 31, 32, 33, 34, 37});
 
 ROOT::RDF::RNode vars_define(ROOT::RDF::RNode df) {
   return df
@@ -100,9 +106,12 @@ int main(int argc, char **argv) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
   desc.add_options()("input-files", po::value<std::vector<std::string>>(),
-                     "Input files")(
-      "run-tag", po::value<std::string>()->default_value(""),
-      "Additional text to legend")("help", "produce help message");
+                     "Input files")("run-tag",
+                                    po::value<std::string>()->default_value(""),
+                                    "Additional text to legend")(
+      "ymax", po::value<double>()->default_value(0), "Maximum y value")(
+      "cross-section", po::value<std::string>()->default_value("xsec.txt"),
+      "Cross section file")("help", "produce help message");
   po::positional_options_description p;
   p.add("input-files", -1);
   po::variables_map vm;
@@ -119,17 +128,13 @@ int main(int argc, char **argv) {
   auto &&files = vm["input-files"].as<std::vector<std::string>>();
   auto nruns = files.size();
   auto &&runtag = vm["run-tag"].as<std::string>();
+  auto ymax = vm["ymax"].as<double>();
+  auto xsecfile =
+      std::ofstream(vm["cross-section"].as<std::string>(), std::ios::trunc);
 
   TH1::AddDirectory(false);
   IniColorCB2pibg();
   ROOT::EnableImplicitMT();
-  // std::vector<std::string> files{};
-  // std::string runtag = argv[1];
-  // // std::string leg_head =
-  // for (int i = 2; i < argc; i++) {
-  //   files.emplace_back(argv[i]);
-  // }
-  // auto nruns = files.size();
   ROOT::RDataFrame input("out_tree", files);
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
   ROOT::RDF::Experimental::AddProgressBar(input);
@@ -144,6 +149,39 @@ int main(int argc, char **argv) {
         });
       },
       {"EventRecord"}, "No other particles");
+  auto weight_sum_channel = d.Define("tup",
+                                     [](int channel, double weight) {
+                                       return std::make_tuple(channel, weight);
+                                     },
+                                     {"channel", "weight"})
+                                .Aggregate(
+                                    [](std::map<int, double> &map,
+                                       const std::tuple<int, double> &var) {
+                                      auto &&[channel, weight] = var;
+                                      map[channel] += weight;
+                                    },
+                                    [](std::map<int, double> map1,
+                                       const std::map<int, double> &map2) {
+                                      for (auto &&[channel, weight] : map2) {
+                                        map1[channel] += weight;
+                                      }
+                                      return map1;
+                                    },
+                                    "tup", std::map<int, double>{});
+  // auto weight_sum_by_channel =
+  //     idlist | std::views::transform([&](int x) {
+  //       return d.Filter([x](int channel) { return channel == x; },
+  //       {"channel"})
+  //           .Sum<double>("weight");
+  //     }) |
+  //     std::ranges::to<std::vector>();
+  auto channel_merged = d.Aggregate(
+      [](std::set<int> &c_set, int channel) { c_set.insert(channel); },
+      [](std::set<int> c_set1, const std::set<int> &c_set2) {
+        c_set1.insert(c_set2.begin(), c_set2.end());
+        return c_set1;
+      },
+      "channel", std::set<int>{});
   auto channel_merged_2pi = d_pions.Aggregate(
       [](std::set<int> &c_set, int channel) { c_set.insert(channel); },
       [](std::set<int> c_set1, const std::set<int> &c_set2) {
@@ -165,11 +203,11 @@ int main(int argc, char **argv) {
       {"1#kern[0.2]{#pi}", "1#kern[0.2]{#pi}", nbins, 0.8, 4.}, "W", "weight");
   auto plot_single_pion_bg =
       df_single_pion
-          .Filter([](int channel) { return channel == 32 || channel == 33; },
+          .Filter([](int channel) { return channel != 32 && channel != 33; },
                   {"channel"})
-          .Histo1D(
-              {"1#kern[0.2]{#pi} BG", "1#kern[0.2]{#pi} BG", nbins, 0.8, 4.},
-              "W", "weight");
+          .Histo1D({"1#kern[0.2]{#pi} non-BG", "1#kern[0.2]{#pi} non-BG", nbins,
+                    0.8, 4.},
+                   "W", "weight");
   auto plot_list =
       std::views::cartesian_product(interaction_cut, pion_channels) |
       std::views::transform([&d_pions, nbins](auto &&tup) {
@@ -219,17 +257,45 @@ int main(int argc, char **argv) {
 
   legend.AddEntry(plot_single_pion.GetPtr());
   legend.AddEntry(plot_single_pion_bg.GetPtr());
-  auto ymax = plot_single_pion->GetMaximum() * 1.1;
+  // auto ymax = plot_single_pion->GetMaximum() * 1.1;
   do_plot({&stack, plot_single_pion, plot_single_pion_bg, &legend},
-          "output_2pi", y, x, {0.7, 0.6, 0.9, 0.9}, 4.0, runtag, "HIST", ymax);
-  auto [stack_2pibg, legend_2pibg] = build_stack_from_list(plot_list_2pibg, -1);
-  do_plot({&stack_2pibg, &legend_2pibg}, "output_2pibg", y, x,
-          {0.7, 0.6, 0.9, 0.9}, 4.0, runtag, "HIST", 0);
+          "output_2pi", y, x, {0.7, 0.6, 0.9, 0.9}, 4.0, runtag, "HIST", ymax,
+          {.top = 0.015, .bottom = 0.11});
+
+  // auto [stack_2pibg, legend_2pibg] = build_stack_from_list(plot_list_2pibg,
+  // -1); do_plot({&stack_2pibg, &legend_2pibg}, "output_2pibg", y, x,
+  //         {0.7, 0.6, 0.9, 0.9}, 4.0, runtag, "HIST", 0);
 
   std::cout << "channel that I see for 2pi: ";
   for (auto &&channel : *channel_merged_2pi) {
     std::cout << channel << " ";
   }
   std::cout << std::endl;
+
+  std::cout << "channel that I see for all: ";
+  for (auto &&channel : *channel_merged) {
+    std::cout << channel << " ";
+  }
+  std::cout << std::endl;
+
+  // for (auto &&[channel, weight] :
+  //      std::views::zip(idlist, weight_sum_by_channel)) {
+  //   if (weight.GetValue() == 0) {
+  //     continue;
+  //   }
+  //   std::println("Channel {:^3} has weight sum: {:>8}", channel,
+  //                std::round(weight.GetValue()));
+  //   std::println(xsecfile, "{} {}", channel, weight.GetValue());
+  // }
+
+  for (auto &&[channel, weight] : weight_sum_channel) {
+    if (weight == 0) {
+      continue;
+    }
+    std::println("Channel {:^3} has weight sum: {:>8.4f}", channel,
+                 weight / nruns);
+    std::println(xsecfile, "{} {}", channel, weight / nruns);
+  }
+
   return 0;
 }

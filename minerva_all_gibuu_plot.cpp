@@ -60,86 +60,121 @@ std::string pion_pretty_name(std::string s) {
 
 plot_data get_info(std::string varname) {
   if (varname == "dalphat") {
-    return plot_data{30, 0., 180., "#delta#it{#alpha}_{T} (degree)",
-                     "d#sigma/d#delta#it{#alpha}_{T} (10^{#minus 38} "
-                     "cm^{2}/degree/nucleon)"};
+    return plot_data{.bins = 30,
+                     .xmin = 0.,
+                     .xmax = 180.,
+                     .name = "#delta#it{#alpha}_{T} (degree)",
+                     .ytitle = "d#sigma/d#delta#it{#alpha}_{T} (10^{#minus 38} "
+                               "cm^{2}/degree/nucleon)"};
   }
   if (varname == "IApN") {
-    return plot_data{30, 0., 0.8, "#it{p}_{N} (GeV/#it{c})",
-                     "d#sigma/d#it{p}_{N} (10^{#minus 38} "
-                     "cm^{2}/GeV/#it{c}/nucleon)"};
+    return plot_data{.bins = 30,
+                     .xmin = 0.,
+                     .xmax = 0.8,
+                     .name = "#it{p}_{N} (GeV/#it{c})",
+                     .ytitle = "d#sigma/d#it{p}_{N} (10^{#minus 38} "
+                               "cm^{2}/GeV/#it{c}/nucleon)"};
   }
   if (varname == "dpL") {
-    return plot_data{30, -1., 1., "#delta p_{L}"};
+    return plot_data{
+        .bins = 30, .xmin = -1., .xmax = 1., .name = "#delta p_{L}"};
   }
   if (varname == "p_cos_theta") {
-    return plot_data{30, -1., 1., "cos #theta_{p}"};
+    return plot_data{
+        .bins = 30, .xmin = -1., .xmax = 1., .name = "cos #theta_{p}"};
   }
   if (varname == "p_theta") {
-    return plot_data{30, 0., 180., "#theta_{p}"};
+    return plot_data{
+        .bins = 30, .xmin = 0., .xmax = 180., .name = "#theta_{p}"};
   }
   if (varname == "dtl") {
-    return plot_data{30, -1., 1., "cos #delta#alpha_{L}"};
+    return plot_data{
+        .bins = 30, .xmin = -1., .xmax = 1., .name = "cos #delta#alpha_{L}"};
   }
   if (varname == "Q2") {
-    return plot_data{50,
-                     0.,
-                     5.,
-                     "#it{Q}^{2} (GeV^{#kern[0.3]{2}})",
-                     "d#sigma/d#it{Q}^{2} (10^{#minus 38} "
-                     "cm^{2}/GeV^{#kern[0.3]{2}}/nucleon)",
-                     0.35,
-                     0.15};
+    return plot_data{.bins = 50,
+                     .xmin = 0.,
+                     .xmax = 5.,
+                     .name = "#it{Q}^{2} (GeV^{#kern[0.3]{2}})",
+                     .ytitle = "d#sigma/d#it{Q}^{2} (10^{#minus 38} "
+                               "cm^{2}/GeV^{#kern[0.3]{2}}/nucleon)",
+                     .ymax_0pi = 0.35,
+                     .ymax_pi0 = 0.15};
   }
   if (varname == "xBj") {
-    return plot_data{50,
-                     0.,
-                     2.0,
-                     "#it{x}_{Bj}",
-                     "d#sigma/d#it{x}_{Bj} (10^{#minus 38} cm^{2}/nucleon)",
-                     .6,
-                     .3};
+    return plot_data{.bins = 50,
+                     .xmin = 0.,
+                     .xmax = 2.0,
+                     .name = "#it{x}_{Bj}",
+                     .ytitle =
+                         "d#sigma/d#it{x}_{Bj} (10^{#minus 38} cm^{2}/nucleon)",
+                     .ymax_0pi = .6,
+                     .ymax_pi0 = .3};
   }
   if (varname == "W") {
-    return plot_data{60,
-                     0.7,
-                     4.0,
-                     "#it{W} (GeV)",
-                     "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
-                     1.5,
-                     .2,
-                     2.,
-                     4.};
+    return plot_data{.bins = 60,
+                     .xmin = 0.7,
+                     .xmax = 4.0,
+                     .name = "#it{W} (GeV)",
+                     .ytitle =
+                         "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
+                     .ymax_0pi = 0.5,
+                     .ymax_pi0 = .2,
+                     .xmax_0pi = 2.,
+                     .xmax_pi0 = 4.};
   }
   if (varname == "p_mu") {
     return plot_data{
-        30, 0., 12., "#it{p}_{#mu} (GeV/#it{c})",
-        "d#sigma/d#it{p}_{#mu} (10^{#minus 38} cm^{2}/GeV/#it{c}/nucleon)"};
+        .bins = 30,
+        .xmin = 0.,
+        .xmax = 12.,
+        .name = "#it{p}_{#mu} (GeV/#it{c})",
+        .ytitle =
+            "d#sigma/d#it{p}_{#mu} (10^{#minus 38} cm^{2}/GeV/#it{c}/nucleon)"};
   }
   if (varname == "theta_mu") {
     return plot_data{
-        30, 0., 60., "#theta_{#mu} (degree)",
-        "d#sigma/d#theta_{#mu} (10^{#minus 38} cm^{2}/degree/nucleon)"};
+        .bins = 30,
+        .xmin = 0.,
+        .xmax = 60.,
+        .name = "#theta_{#mu} (degree)",
+        .ytitle =
+            "d#sigma/d#theta_{#mu} (10^{#minus 38} cm^{2}/degree/nucleon)"};
   }
   if (varname == "p_p") {
     return plot_data{
-        30, 0., 20., "#it{p}_{p} (GeV/#it{c})",
-        "d#sigma/d#it{p}_{p} (10^{#minus 38} cm^{2}/GeV/#it{c}/nucleon)"};
+        .bins = 30,
+        .xmin = 0.,
+        .xmax = 20.,
+        .name = "#it{p}_{p} (GeV/#it{c})",
+        .ytitle =
+            "d#sigma/d#it{p}_{p} (10^{#minus 38} cm^{2}/GeV/#it{c}/nucleon)"};
   }
   if (varname == "theta_p") {
     return plot_data{
-        30, 0., 180., "#theta_{p} (degree)",
-        "d#sigma/d#theta_{p} (10^{#minus 38} cm^{2}/degree/nucleon)"};
+        .bins = 30,
+        .xmin = 0.,
+        .xmax = 180.,
+        .name = "#theta_{p} (degree)",
+        .ytitle = "d#sigma/d#theta_{p} (10^{#minus 38} cm^{2}/degree/nucleon)"};
   }
   if (varname == "p_pion") {
     return plot_data{
-        30, 0., 10., "#it{p}_{#pi} (GeV/#it{c})",
-        "d#sigma/d#it{p}_{#pi} (10^{#minus 38} cm^{2}/GeV/#it{c}/nucleon)"};
+        .bins = 30,
+        .xmin = 0.,
+        .xmax = 10.,
+        .name = "#it{p}_{#pi} (GeV/#it{c})",
+        .ytitle =
+            "d#sigma/d#it{p}_{#pi} (10^{#minus 38} cm^{2}/GeV/#it{c}/nucleon)"};
   }
   if (varname == "theta_pion") {
     return plot_data{
-        30, 0., 180., "#theta_{#pi} (degree)",
-        "d#sigma/d#theta_{#pi} (10^{#minus 38} cm^{2}/degree/nucleon)"};
+        .bins = 30,
+        .xmin = 0.,
+        .xmax = 180.,
+        .name = "#theta_{#pi} (degree)",
+        .ytitle =
+            "d#sigma/d#theta_{#pi} (10^{#minus 38} cm^{2}/degree/nucleon)"};
   }
   throw std::runtime_error("Unknown variable name");
 }
@@ -225,7 +260,11 @@ int main(int argc, char *argv[]) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
   desc.add_options()("input-files", po::value<std::vector<std::string>>(),
-                     "Input files")
+                     "Input files") //
+      ("add-label-var", po::value<char>()->default_value('a'),
+       "tag to be added to vars") //
+      ("add-label-tki", po::value<char>()->default_value('a'),
+       "tag to be added to TKI vars")
       //                (
       // "run-tag", po::value<std::string>()->default_value(""),
       // "Run tag")
@@ -247,6 +286,8 @@ int main(int argc, char *argv[]) {
   auto &&files = vm["input-files"].as<std::vector<std::string>>();
   auto n_runs = files.size();
   auto additional_text = vm["add-text"].as<std::string>();
+  auto tag_tki_base = vm["add-label-tki"].as<char>();
+  auto tag_var_base = vm["add-label-var"].as<char>();
 
   TH1::AddDirectory(false);
   ROOT::EnableImplicitMT();
@@ -293,10 +334,12 @@ int main(int argc, char *argv[]) {
   auto pred_all_IApN_0pi = plots.emplace_back(
       make_plots(rdf_0pi_after_cut, MINERvA_TKI::ZeroPi::IApN::get_binning(),
                  "IApN", "0pi"));
-  auto pred_all_dalphat_pi0 = plots.emplace_back(make_plots(
-      rdf_pi0_after_cut, MINERvA_TKI::pi0::dalphat::get_binning(), "dalphat", "pi0"));
-  auto pred_all_dalphat_0pi = plots.emplace_back(make_plots(
-      rdf_0pi_after_cut, MINERvA_TKI::ZeroPi::dalphat::get_binning(), "dalphat", "0pi"));
+  auto pred_all_dalphat_pi0 = plots.emplace_back(
+      make_plots(rdf_pi0_after_cut, MINERvA_TKI::pi0::dalphat::get_binning(),
+                 "dalphat", "pi0"));
+  auto pred_all_dalphat_0pi = plots.emplace_back(
+      make_plots(rdf_0pi_after_cut, MINERvA_TKI::ZeroPi::dalphat::get_binning(),
+                 "dalphat", "0pi"));
 
   // per channel stacked plots
   // pn 0pi
@@ -304,16 +347,17 @@ int main(int argc, char *argv[]) {
       rdf_0pi_after_cut, "IApN", MINERvA_TKI::ZeroPi::IApN::get_binning());
 
   // dat 0pi
-  auto plots_0pi_dalphat = plot_channels_0pi(rdf_0pi_after_cut, "dalphat",
-                                             MINERvA_TKI::ZeroPi::dalphat::get_binning());
+  auto plots_0pi_dalphat =
+      plot_channels_0pi(rdf_0pi_after_cut, "dalphat",
+                        MINERvA_TKI::ZeroPi::dalphat::get_binning());
 
   // pn pi0
   auto plots_pi0_IApN = plot_channels_pi0(
       rdf_pi0_after_cut, "IApN", MINERvA_TKI::pi0::IApN::get_binning());
 
   // dat pi0
-  auto plots_pi0_dalphat = plot_channels_pi0(rdf_pi0_after_cut, "dalphat",
-                                             MINERvA_TKI::pi0::dalphat::get_binning());
+  auto plots_pi0_dalphat = plot_channels_pi0(
+      rdf_pi0_after_cut, "dalphat", MINERvA_TKI::pi0::dalphat::get_binning());
 
   // auto plots_pi0_W = get_channel_list_pi0(rdf_pi0_after_cut, "W");
   std::list<std::string> vars_0pi{"W",        "Q2",  "xBj",    "p_mu",
@@ -380,7 +424,7 @@ int main(int argc, char *argv[]) {
                      const TLorentzVector &PrimaryLepton,
                      const TLorentzVector &InitNucleon) {
                     auto q = InitNeutrino - PrimaryLepton;
-                    auto p = InitNucleon;
+                    const auto &p = InitNucleon;
                     return p.Dot(q);
                   },
                   {"InitNeutrino", "PrimaryLepton", "InitNucleon"})
@@ -395,6 +439,16 @@ int main(int argc, char *argv[]) {
     plot->Scale((12. / 13.) / n_runs / 10, "width");
     file->Add(plot.GetPtr());
   }
+
+  std::ranges::for_each(var_plots_0pi[0] |
+                            std::views::filter([](auto &tup) -> bool {
+                              return std::get<0>(tup) == "QE";
+                            }),
+                        [](auto &hist) {
+                          auto &[name, hist_ptr, count] = hist;
+                          name = name + " (#times 1/3)";
+                          hist_ptr->Scale(1 / 3.);
+                        });
 
   constexpr double threshold_frac_0pi = 1.5e-2;
   constexpr double threshold_frac_pi0 = .5e-2;
@@ -438,13 +492,17 @@ int main(int argc, char *argv[]) {
 
   auto chi2_IApN_pi0 =
       MINERvA_TKI::pi0::IApN::do_chi2(pred_all_IApN_pi0.GetPtr());
-  auto chi2_IApN_0pi = MINERvA_TKI::ZeroPi::IApN::do_chi2(pred_all_IApN_0pi.GetPtr());
-  auto chi2_dalphat_pi0 = MINERvA_TKI::pi0::dalphat::do_chi2(pred_all_dalphat_pi0.GetPtr());
-  auto chi2_dalphat_0pi = MINERvA_TKI::ZeroPi::dalphat::do_chi2(pred_all_dalphat_0pi.GetPtr());
+  auto chi2_IApN_0pi =
+      MINERvA_TKI::ZeroPi::IApN::do_chi2(pred_all_IApN_0pi.GetPtr());
+  auto chi2_dalphat_pi0 =
+      MINERvA_TKI::pi0::dalphat::do_chi2(pred_all_dalphat_pi0.GetPtr());
+  auto chi2_dalphat_0pi =
+      MINERvA_TKI::ZeroPi::dalphat::do_chi2(pred_all_dalphat_0pi.GetPtr());
 
   auto &&[shape_only_chi2_IApN_pi0, shape_only_prediction_IApN_pi0,
           shape_only_data_IApN_pi0, norm_IApN_pi0] =
-      do_chi2_shape_only(MINERvA_TKI::pi0::IApN::get_cov(), MINERvA_TKI::pi0::IApN::get_hist(),
+      do_chi2_shape_only(MINERvA_TKI::pi0::IApN::get_cov(),
+                         MINERvA_TKI::pi0::IApN::get_hist(),
                          *(dynamic_cast<TH1D *>(pred_all_IApN_pi0.GetPtr())));
   file->Add(&shape_only_data_IApN_pi0);
   file->Add(&shape_only_prediction_IApN_pi0);
@@ -453,7 +511,8 @@ int main(int argc, char *argv[]) {
 
   auto &&[shape_only_chi2_IApN_0pi, shape_only_prediction_IApN_0pi,
           shape_only_data_IApN_0pi, norm_IApN_0pi] =
-      do_chi2_shape_only(MINERvA_TKI::ZeroPi::IApN::get_cov(), MINERvA_TKI::ZeroPi::IApN::get_hist(),
+      do_chi2_shape_only(MINERvA_TKI::ZeroPi::IApN::get_cov(),
+                         MINERvA_TKI::ZeroPi::IApN::get_hist(),
                          *(dynamic_cast<TH1D *>(pred_all_IApN_0pi.GetPtr())));
   file->Add(&shape_only_data_IApN_0pi);
   file->Add(&shape_only_prediction_IApN_0pi);
@@ -463,7 +522,8 @@ int main(int argc, char *argv[]) {
   auto &&[shape_only_chi2_dalphat_pi0, shape_only_prediction_dalphat_pi0,
           shape_only_data_dalphat_pi0, norm_dalphat_pi0] =
       do_chi2_shape_only(
-          MINERvA_TKI::pi0::dalphat::get_cov(), MINERvA_TKI::pi0::dalphat::get_hist(),
+          MINERvA_TKI::pi0::dalphat::get_cov(),
+          MINERvA_TKI::pi0::dalphat::get_hist(),
           *(dynamic_cast<TH1D *>(pred_all_dalphat_pi0.GetPtr())));
   file->Add(&shape_only_data_dalphat_pi0);
   file->Add(&shape_only_prediction_dalphat_pi0);
@@ -473,7 +533,8 @@ int main(int argc, char *argv[]) {
   auto &&[shape_only_chi2_dalphat_0pi, shape_only_prediction_dalphat_0pi,
           shape_only_data_dalphat_0pi, norm_dalphat_0pi] =
       do_chi2_shape_only(
-          MINERvA_TKI::ZeroPi::dalphat::get_cov(), MINERvA_TKI::ZeroPi::dalphat::get_hist(),
+          MINERvA_TKI::ZeroPi::dalphat::get_cov(),
+          MINERvA_TKI::ZeroPi::dalphat::get_hist(),
           *(dynamic_cast<TH1D *>(pred_all_dalphat_0pi.GetPtr())));
   file->Add(&shape_only_data_dalphat_0pi);
   file->Add(&shape_only_prediction_dalphat_0pi);
@@ -507,80 +568,90 @@ int main(int argc, char *argv[]) {
     return ss.str();
   };
 
-  std::unique_ptr<TLatex> latex;
-  if (!additional_text.empty()) {
-    latex = std::make_unique<TLatex>(0.65, 0.5, additional_text.c_str());
-    latex->SetNDC();
-  }
+  auto build_add_text = [&](char tag) {
+    std::unique_ptr<TLatex> latex;
+    if (!additional_text.empty()) {
+      latex = std::make_unique<TLatex>(
+          0.65, 0.5, std::format("({}) {}", tag, additional_text).c_str());
+      latex->SetNDC();
+    }
+    return latex;
+  };
 
   // first entry always data, then anything else
   do_plot({&exp_data_hist_IApN_pi0, &plots_pi0_IApN_stack,
-           &plots_pi0_dalphat_leg, latex.get()},
+           &plots_pi0_dalphat_leg, build_add_text(tag_tki_base + 2).get()},
           "IApN_pi0", get_info("IApN").ytitle, get_info("IApN").name,
           {0.65, 0.55, 0.95, 0.9}, 0.8,
-          form_legend(&exp_data_hist_IApN_pi0, chi2_IApN_pi0), "HISTC");
+          form_legend(&exp_data_hist_IApN_pi0, chi2_IApN_pi0), "HISTC", 0,
+          {.top = 0.02, .bottom = 0.125});
 
   do_plot({&shape_only_data_IApN_pi0, &stack_shape_IApN_pi0,
-           &plots_pi0_IApN_leg, latex.get()},
+           &plots_pi0_IApN_leg, build_add_text(tag_tki_base + 2).get()},
           "IApN_pi0_shape", "shape", get_info("IApN").name,
           {0.65, 0.55, 0.95, 0.9}, 0.8,
           form_legend(&exp_data_hist_IApN_pi0, shape_only_chi2_IApN_pi0),
-          "HISTC");
+          "HISTC", 0, {.top = 0.02, .bottom = 0.125});
 
   do_plot({&exp_data_hist_IApN_0pi, &plots_0pi_IApN_stack, &plots_0pi_IApN_leg,
-           latex.get()},
+           build_add_text(tag_tki_base + 2).get()},
           "IApN_0pi", get_info("IApN").ytitle, get_info("IApN").name,
           {0.65, 0.55, 0.95, 0.9}, 0.8,
-          form_legend(&exp_data_hist_IApN_0pi, chi2_IApN_0pi), "HISTC");
+          form_legend(&exp_data_hist_IApN_0pi, chi2_IApN_0pi), "HISTC", 0,
+          {.top = 0.02, .bottom = 0.125});
 
   do_plot({&shape_only_data_IApN_0pi, &stack_shape_IApN_0pi,
-           &plots_0pi_IApN_leg, latex.get()},
+           &plots_0pi_IApN_leg, build_add_text(tag_tki_base + 2).get()},
           "IApN_0pi_shape", "shape", get_info("IApN").name,
           {0.65, 0.55, 0.95, 0.9}, 0.8,
           form_legend(&exp_data_hist_IApN_pi0, shape_only_chi2_IApN_pi0),
-          "HISTC");
+          "HISTC", 0, {.top = 0.02, .bottom = 0.125});
 
   do_plot({&exp_data_hist_dalphat_pi0, &plots_pi0_dalphat_stack,
-           &plots_pi0_dalphat_leg, latex.get()},
+           &plots_pi0_dalphat_leg, build_add_text(tag_tki_base).get()},
           "dalphat_pi0", get_info("dalphat").ytitle, get_info("dalphat").name,
           {0.2, 0.5, 0.5, 0.9}, 0.,
-          form_legend(&exp_data_hist_dalphat_pi0, chi2_dalphat_pi0), "HISTC");
+          form_legend(&exp_data_hist_dalphat_pi0, chi2_dalphat_pi0), "HISTC", 0,
+          {.top = 0.06, .bottom = 0.11});
 
   do_plot({&shape_only_data_dalphat_pi0, &stack_shape_dalphat_pi0,
-           &plots_pi0_dalphat_leg, latex.get()},
+           &plots_pi0_dalphat_leg, build_add_text(tag_tki_base).get()},
           "dalphat_pi0_shape", "shape", get_info("dalphat").name,
           {0.2, 0.5, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_pi0, shape_only_chi2_dalphat_pi0),
-          "HISTC");
+          "HISTC", 0, {.top = 0.06, .bottom = 0.11});
 
   do_plot({&exp_data_hist_dalphat_0pi, &plots_0pi_dalphat_stack,
-           &plots_0pi_dalphat_leg, latex.get()},
+           &plots_0pi_dalphat_leg, build_add_text(tag_tki_base).get()},
           "dalphat_0pi", get_info("dalphat").ytitle, get_info("dalphat").name,
           {0.2, 0.6, 0.5, 0.9}, 0.,
-          form_legend(&exp_data_hist_dalphat_0pi, chi2_dalphat_0pi), "HISTC");
+          form_legend(&exp_data_hist_dalphat_0pi, chi2_dalphat_0pi), "HISTC", 0,
+          {.top = 0.06, .bottom = 0.11});
 
   do_plot({&shape_only_data_dalphat_0pi, &stack_shape_dalphat_0pi,
-           &plots_0pi_dalphat_leg, latex.get()},
+           &plots_0pi_dalphat_leg, build_add_text(tag_tki_base).get()},
           "dalphat_0pi_shape", "shape", get_info("dalphat").name,
           {0.2, 0.5, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_0pi, shape_only_chi2_dalphat_0pi),
-          "HISTC");
+          "HISTC", 0, {.top = 0.06, .bottom = 0.11});
 
   for (auto &&[name, list] : std::views::zip(vars_0pi, stacked_vars_0pi)) {
     auto &&[stack, leg] = list;
     auto plot_ent = get_info(name);
     auto xmax = plot_ent.xmax_0pi == 0. ? plot_ent.xmax : plot_ent.xmax_0pi;
-    do_plot({&stack, &leg, latex.get()}, name + "_0pi", plot_ent.ytitle,
-            plot_ent.name, {0.65, 0.55, 0.95, 0.9}, xmax,
-            "MINERvA 0#kern[0.1]{#pi}", "HIST", plot_ent.ymax_0pi);
+    do_plot({&stack, &leg, build_add_text(tag_var_base).get()}, name + "_0pi",
+            plot_ent.ytitle, plot_ent.name, {0.65, 0.65, 0.95, 0.93}, xmax,
+            "MINERvA 0#kern[0.1]{#pi}", "HIST", plot_ent.ymax_0pi,
+            {.top = plot_ent.ymax_0pi < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }
   for (auto &&[name, list] : std::views::zip(vars_pi0, stacked_vars_pi0)) {
     auto &&[stack, leg] = list;
     auto plot_ent = get_info(name);
     auto xmax = plot_ent.xmax_pi0 == 0. ? plot_ent.xmax : plot_ent.xmax_pi0;
-    do_plot({&stack, &leg, latex.get()}, name + "_pi0", plot_ent.ytitle,
-            plot_ent.name, {0.65, 0.55, 0.95, 0.9}, xmax, "MINERvA #pi^{0}",
-            "HIST", plot_ent.ymax_pi0);
+    do_plot({&stack, &leg, build_add_text(tag_var_base).get()}, name + "_pi0",
+            plot_ent.ytitle, plot_ent.name, {0.65, 0.65, 0.95, 0.93}, xmax,
+            "MINERvA #pi^{0}", "HIST", plot_ent.ymax_pi0,
+            {.top = plot_ent.ymax_pi0 < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }
 
   file->Write();

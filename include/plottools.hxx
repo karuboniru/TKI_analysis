@@ -31,7 +31,7 @@ constexpr auto fgkMarkerSize = 1;
 constexpr auto fgkLineWidth = 2;
 constexpr auto fgkTextFont = 42;
 constexpr auto fgkLabelOffset = 0.01;
-constexpr auto fgkXTitleOffset = 1.25; // 1.1;//1.25;
+constexpr auto fgkXTitleOffset = 1.05; // 1.1;//1.25;
 constexpr auto fgkYTitleOffset = 1.1;  // 1.2;
 constexpr auto fgkTickLength = 0.02;
 
@@ -304,6 +304,10 @@ struct plot_data {
   double xmax_0pi{}, xmax_pi0{};
 };
 
+struct override_margin {
+  double left{}, top{}, right{}, bottom{};
+};
+
 using plot_ptr_t =
     std::variant<TH1 *, TLegend *, THStack *, ROOT::RDF::RResultPtr<TH1D>,
                  ROOT::RDF::RResultPtr<TH1>, TLatex *>;
@@ -311,5 +315,6 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
              const std::string &filename, std::string_view ytitle,
              std::string_view xtitle, std::array<double, 4> legend_pos,
              double xmax = 0., std::string legend_head = "",
-             std::string histopt = "HIST", double ymax = 0.);
+             std::string histopt = "HIST", double ymax = 0.,
+             override_margin m = {});
 void IniColorCB2pibg();
