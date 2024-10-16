@@ -53,11 +53,16 @@ set(NuWro_TOOL src/NuWro2event.cxx )
 add_library(analysis SHARED ${COMMON_TOOL} ${GIBUU_TOOL})
 if(NUWRO_DIR)
   target_sources(analysis PRIVATE ${NuWro_TOOL})
-endif()
-target_link_libraries(analysis PRIVATE ROOT::Physics ROOT::ROOTDataFrame)
-if(NUWRO_DIR)
   target_link_libraries(analysis PRIVATE EVENT1)
 endif()
+target_link_libraries(analysis PRIVATE ROOT::Physics ROOT::ROOTDataFrame)
+
+target_compile_definitions(analysis PRIVATE 
+  PIZERO_DATA="${CMAKE_CURRENT_SOURCE_DIR}/data/PIZEROTKI_MINERvA.root"
+  ZEROPI_DATA="${CMAKE_CURRENT_SOURCE_DIR}/data/PhysRevD.101.092001.root"
+  T2K_STK_DATA="${CMAKE_CURRENT_SOURCE_DIR}/data/datResults.root"
+)
+
 root_generate_dictionary(G__Dict ${Dict_HEADERS} MODULE analysis LINKDEF LinkDef.h)
 
 
@@ -111,7 +116,6 @@ target_link_libraries(MINERvA_all PRIVATE
   EVENT1
   analysis
 )
-
 
 add_executable(MINERvA_all_gibuu MINERvA_all_gibuu.cpp)
 

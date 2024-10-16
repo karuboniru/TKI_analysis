@@ -12,10 +12,8 @@
 // 0pi channel: https://arxiv.org/src/1805.05486v4/anc/SupplementalMaterial2.txt
 
 namespace {
-const std::string pizero_path{
-    "/var/home/yan/neutrino/tkidata/PIZEROTKI_MINERvA.root"};
-const std::string zeropi_path{
-    "/var/home/yan/neutrino/tkidata/PhysRevD.101.092001.root"};
+const std::string pizero_path{PIZERO_DATA};
+const std::string zeropi_path{ZEROPI_DATA};
 } // namespace
 
 namespace MINERvA_TKI::pi0 {
@@ -237,9 +235,7 @@ double do_chi2(TH1 *hist) {
 constexpr double rag_to_deg = 180. / M_PI;
 
 namespace T2K_STK {
-TFile T2K_STK_dat_file(
-    "/var/home/yan/neutrino/cc0piWithProtonsDataRelease_v1p3/datResults.root",
-    "READONLY");
+TFile T2K_STK_dat_file(T2K_STK_DATA, "READONLY");
 std::array<double, dimension + 1> get_binning() {
   std::array<double, dimension + 1> bin_edges{0,    .47,  1.02, 1.54, 1.98,
                                               2.34, 2.64, 2.89, M_PI};
