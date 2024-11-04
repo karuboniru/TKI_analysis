@@ -283,17 +283,21 @@ THStack scale_stack(THStack &stack, double scale);
 class TH1;
 #include <ROOT/RResultPtr.hxx>
 
+struct legend_conf {
+  std::vector<std::string> force_include{}, force_exclude{};
+};
+
 std::tuple<THStack, TLegend> build_stack_from_list(
     std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>, long>> list,
-    double threshold);
+    double threshold, const legend_conf &conf = {});
 
 std::tuple<THStack, TLegend> build_stack_from_list(
     std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>>> list,
-    double threshold);
+    double threshold, const legend_conf &conf = {});
 
 std::tuple<THStack, TLegend> build_stack_from_list(
     std::vector<std::tuple<std::string, std::unique_ptr<TH1D>, long>> &list,
-    double threshold);
+    double threshold, const legend_conf &conf = {});
 
 struct plot_data {
   int bins;
@@ -317,4 +321,11 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
              double xmax = 0., std::string legend_head = "",
              std::string histopt = "HIST", double ymax = 0.,
              override_margin m = {});
-void IniColorCB2pibg();
+// void IniColorCB2pibg();
+void IniColorCBminerva2pibg();
+
+std::tuple<THStack, TLegend> build_stack_from_list(
+    std::vector<
+        std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>, long, short>>
+        list,
+    double threshold);

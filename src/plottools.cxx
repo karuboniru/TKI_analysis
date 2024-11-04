@@ -1,5 +1,6 @@
 #include "plottools.hxx"
 #include <TNamed.h>
+#include <algorithm>
 #include <ranges>
 
 THStack scale_stack(THStack &stack, double scale) {
@@ -30,17 +31,15 @@ void IniColorCB() {
   // new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
   // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
   // new TColor(id++, 0. / 255., 219. / 255., 219. / 255., "CB3_Teal", 1.0);
-  // 2pibg
-  new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
-  new TColor(id++, 35. / 255., 141. / 255., 88. / 255., "CB9_BlueGrey", 1.0);
-  // 2p2h
-  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
-  // 2p2h-multipi: unused!
-  new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "dummy", 1.0);
+
   // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
   // QE
   new TColor(id++, 36. / 255., 255. / 255., 36. / 255., "CB14_DayGleen", 1.0);
   new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
+  // 2p2h
+  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
+  // 2p2h-multipi: unused!
+  new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "dummy", 1.0);
   // RES
   // new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
   // new TColor(id++, 146. / 255., 73. / 255., 0. / 255., "CB12_Tan", 1.0);
@@ -50,74 +49,84 @@ void IniColorCB() {
   // DIS
   new TColor(id++, 255. / 255., 182. / 255., 119. / 255., "CB5_BabyPink", 1.0);
   new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
-
-  // new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
-  //  1.0);
-
-  // new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB13_Orange", 1.0);
-  // new TColor(id++, 36. / 255., 255. / 255., 36. / 255.,
-  // "CB14_DayGleen", 1.0); new TColor(id++, 255. / 255., 255. / 255., 109. /
-  // 255., "CB15_SunFlower",
-  //            1.0);
-
-  kset = true;
-}
-void IniColorCB2pibg() {
-  if (kset) {
-    printf("style::IniColorCB arleady set\n");
-    return;
-  } else {
-    printf("style::IniColorCB creating new color\n");
-  }
-
-  // http://www.somersault1824.com/tips-for-designing-scientific-figures-for-color-blind-readers/
-  Int_t id = fgkColorBase + 1;
-  // new TColor(id++, 0. / 255., 0. / 255., 0. / 255., "CB1_Black", 1.0);
   // 2pibg
-  // new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
-  // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
-  // new TColor(id++, 0. / 255., 219. / 255., 219. / 255., "CB3_Teal", 1.0);
   new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
-  // 1
-  new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
-             1.0);
-  new TColor(id++, 0. / 255., 109. / 255., 219. / 255., "CB7_RoyalBlue", 1.0);
-  // new TColor(id++, 109. / 255., 182. / 255., 255. / 255.,
-  // "CB9_BlueGrey", 1.0);
   new TColor(id++, 35. / 255., 141. / 255., 88. / 255., "CB9_BlueGrey", 1.0);
-  // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
-  new TColor(id++, 255. / 255., 182. / 255., 119. / 255., "CB5_BabyPink", 1.0);
-  new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
-  // QE
-  new TColor(id++, 36. / 255., 255. / 255., 36. / 255., "CB14_DayGleen", 1.0);
-  new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
-  // RES
-  // new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
-  // new TColor(id++, 146. / 255., 73. / 255., 0. / 255., "CB12_Tan", 1.0);
-
-  // DIS
-  new TColor(id++, 255. / 255., 182. / 255., 119. / 255., "CB5_BabyPink", 1.0);
-  new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
-  // 2p2h
-  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
-  // 2p2h-multipi: unused!
-  new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "dummy", 1.0);
-
   // new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
   //  1.0);
 
-  // new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB13_Orange", 1.0);
+  new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB13_Orange", 1.0);
   // new TColor(id++, 36. / 255., 255. / 255., 36. / 255.,
-  // "CB14_DayGleen", 1.0); new TColor(id++, 255. / 255., 255. / 255., 109. /
-  // 255., "CB15_SunFlower",
-  //            1.0);
+  // "CB14_DayGleen", 1.0);
+  new TColor(id++, 255. / 255., 255. / 255., 109. / 255., "CB15_SunFlower",
+             1.0);
 
   kset = true;
 }
+// void IniColorCB2pibg() {
+//   if (kset) {
+//     printf("style::IniColorCB arleady set\n");
+//     return;
+//   } else {
+//     printf("style::IniColorCB creating new color\n");
+//   }
+
+//   //
+//   http://www.somersault1824.com/tips-for-designing-scientific-figures-for-color-blind-readers/
+//   Int_t id = fgkColorBase + 1;
+//   // new TColor(id++, 0. / 255., 0. / 255., 0. / 255., "CB1_Black", 1.0);
+//   // new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
+//   // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
+//   // new TColor(id++, 0. / 255., 219. / 255., 219. / 255., "CB3_Teal", 1.0);
+//   // 2pibg
+//   new TColor(id++, 35. / 255., 141. / 255., 88. / 255., "CB9_BlueGrey", 1.0);
+//   new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
+//   // 1pibg
+//   new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
+//              1.0);
+//   new TColor(id++, 0. / 255., 109. / 255., 219. / 255.,
+//   "CB7_RoyalBlue", 1.0);
+//   // new TColor(id++, 109. / 255., 182. / 255., 255. / 255.,
+//   // "CB9_BlueGrey", 1.0);
+//   // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
+//   // 2p2h
+//   new TColor(id++, 255. / 255., 182. / 255., 119. / 255.,
+//   "CB5_BabyPink", 1.0); new TColor(id++, 146. / 255., 0. / 255., 0. / 255.,
+//   "CB11_Maroon", 1.0);
+//   // QE
+//   new TColor(id++, 36. / 255., 255. / 255., 36. / 255.,
+//   "CB14_DayGleen", 1.0); new TColor(id++, 0. / 255., 146. / 255., 146. /
+//   255., "CB3_Teal", 1.0);
+//   // RES
+//   // new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
+//   // new TColor(id++, 146. / 255., 73. / 255., 0. / 255., "CB12_Tan", 1.0);
+
+//   // DIS
+//   new TColor(id++, 255. / 255., 182. / 255., 119. / 255.,
+//   "CB5_BabyPink", 1.0); new TColor(id++, 146. / 255., 0. / 255., 0. / 255.,
+//   "CB11_Maroon", 1.0);
+//   // 2p2h
+//   new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
+//   // 2p2h-multipi: unused!
+//   new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "dummy", 1.0);
+
+//   // new TColor(id++, 182. / 255., 219. / 255., 255. / 255.,
+//   "CB10_SpaceWolves",
+//   //  1.0);
+
+//   // new TColor(id++, 219. / 255., 209. / 255., 0. / 255.,
+//   "CB13_Orange", 1.0);
+//   // new TColor(id++, 36. / 255., 255. / 255., 36. / 255.,
+//   // "CB14_DayGleen", 1.0); new TColor(id++, 255. / 255., 255. / 255., 109. /
+//   // 255., "CB15_SunFlower",
+//   //            1.0);
+
+//   kset = true;
+// }
 
 std::tuple<THStack, TLegend> build_stack_from_list(
     std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>, long>> list,
-    double threshold) {
+    double threshold, const legend_conf &conf) {
   IniColorCB();
   std::tuple<THStack, TLegend> tup;
   auto &&[stack, legend] = tup;
@@ -125,26 +134,60 @@ std::tuple<THStack, TLegend> build_stack_from_list(
     // auto &&[name, plot] = plot_entry;
     plot->SetLineColor(fgkColorBase + 1 + color_diff);
     plot->SetFillColor(fgkColorBase + 1 + color_diff);
-    // plot->SetFillStyle(1001);
 
     stack.Add(plot.GetPtr());
-    // if (plot->Integral("WIDTH") > threshold)
-    //   legend.AddEntry(plot.GetPtr(), name.c_str(), "f");
-    // else
-    //   skipped++;
   }
   for (auto &&[name, plot, _] : list) {
-    if (plot->Integral("WIDTH") > threshold)
+    if ((std::ranges::any_of(conf.force_include,
+                             [&](auto &&str) { return name.contains(str); }) ||
+         plot->Integral("WIDTH") > threshold) &&
+        (std::ranges::none_of(conf.force_exclude, [&](auto &&str) {
+          return name.contains(str);
+        }))) {
       legend.AddEntry(plot.GetPtr(), name.c_str(), "f");
-    // else
-    //   skipped++;
+    }
   }
   return tup;
 }
 
+// std::tuple<THStack, TLegend> build_stack_from_list(
+//     std::vector<
+//         std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>, long, short>>
+//         list,
+//     double threshold, const legend_conf &conf) {
+//   IniColorCB();
+//   std::tuple<THStack, TLegend> tup;
+//   auto &&[stack, legend] = tup;
+//   for (auto &&[name, plot, color_diff, fill_attr] : list) {
+//     // auto &&[name, plot] = plot_entry;
+//     plot->SetLineColor(fgkColorBase + 1 + color_diff);
+//     plot->SetFillColor(fgkColorBase + 1 + color_diff);
+//     plot->SetFillStyle(fill_attr);
+//     // plot->SetFillStyle(1001);
+
+//     stack.Add(plot.GetPtr());
+//     // if (plot->Integral("WIDTH") > threshold)
+//     //   legend.AddEntry(plot.GetPtr(), name.c_str(), "f");
+//     // else
+//     //   skipped++;
+//   }
+//   for (auto &&[name, plot, _, _u] : list) {
+//     if ((std::ranges::any_of(conf.force_include,
+//                              [&](auto &&str) { return name.contains(str); })
+//                              ||
+//          plot->Integral("WIDTH") > threshold) &&
+//         (std::ranges::none_of(conf.force_exclude, [&](auto &&str) {
+//           return name.contains(str);
+//         }))) {
+//       legend.AddEntry(plot.GetPtr(), name.c_str(), "f");
+//     }
+//   }
+//   return tup;
+// }
+
 std::tuple<THStack, TLegend> build_stack_from_list(
     std::vector<std::tuple<std::string, std::unique_ptr<TH1D>, long>> &list,
-    double threshold) {
+    double threshold, const legend_conf &conf) {
   IniColorCB();
   std::tuple<THStack, TLegend> tup;
   auto &&[stack, legend] = tup;
@@ -161,17 +204,21 @@ std::tuple<THStack, TLegend> build_stack_from_list(
     //   skipped++;
   }
   for (auto &&[name, plot, _] : list) {
-    if (plot->Integral("WIDTH") > threshold)
+    if ((std::ranges::any_of(conf.force_include,
+                             [&](auto &&str) { return name.contains(str); }) ||
+         plot->Integral("WIDTH") > threshold) &&
+        (std::ranges::none_of(conf.force_exclude, [&](auto &&str) {
+          return name.contains(str);
+        }))) {
       legend.AddEntry(plot.get(), name.c_str(), "f");
-    // else
-    //   skipped++;
+    }
   }
   return tup;
 }
 
 std::tuple<THStack, TLegend> build_stack_from_list(
     std::vector<std::tuple<std::string, ROOT::RDF::RResultPtr<TH1>>> list,
-    double threshold) {
+    double threshold, const legend_conf &conf) {
   IniColorCB();
   std::tuple<THStack, TLegend> tup;
   auto &&[stack, legend] = tup;
@@ -191,10 +238,14 @@ std::tuple<THStack, TLegend> build_stack_from_list(
     //   skipped++;
   }
   for (auto &&[name, plot] : list) {
-    if (plot->Integral("WIDTH") > threshold)
+    if ((std::ranges::any_of(conf.force_include,
+                             [&](auto &&str) { return name.contains(str); }) ||
+         plot->Integral("WIDTH") > threshold) &&
+        (std::ranges::none_of(conf.force_exclude, [&](auto &&str) {
+          return name.contains(str);
+        }))) {
       legend.AddEntry(plot.GetPtr(), name.c_str(), "f");
-    // else
-    //   skipped++;
+    }
   }
   return tup;
 }
@@ -342,4 +393,48 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
   c->SaveAs((filename + ".pdf").c_str());
   c->SaveAs((filename + ".eps").c_str());
   c->SaveAs((filename + ".svg").c_str());
+}
+
+void IniColorCBminerva2pibg() {
+  if (kset) {
+    printf("style::IniColorCB arleady set\n");
+    return;
+  } else {
+    printf("style::IniColorCB creating new color\n");
+  }
+
+  // http://www.somersault1824.com/tips-for-designing-scientific-figures-for-color-blind-readers/
+  Int_t id = fgkColorBase + 1;
+  // new TColor(id++, 0. / 255., 0. / 255., 0. / 255., "CB1_Black", 1.0);
+  // 2pibg
+  // new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
+  // new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
+  // new TColor(id++, 0. / 255., 219. / 255., 219. / 255., "CB3_Teal", 1.0);
+
+  // 1
+
+  // new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
+  // QE
+  new TColor(id++, 36. / 255., 255. / 255., 36. / 255., "CB14_DayGleen", 1.0);
+  new TColor(id++, 0. / 255., 146. / 255., 146. / 255., "CB3_Teal", 1.0);
+  // 2p2h
+  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
+  // 2p2h-multipi: unused!
+  new TColor(id++, 255. / 255., 109. / 255., 182. / 255., "dummy", 1.0);
+
+  // RES
+  new TColor(id++, 182. / 255., 219. / 255., 255. / 255., "CB10_SpaceWolves",
+             1.0);
+  new TColor(id++, 0. / 255., 109. / 255., 219. / 255., "CB7_RoyalBlue", 1.0);
+
+  // DIS
+  new TColor(id++, 255. / 255., 182. / 255., 119. / 255., "CB5_BabyPink", 1.0);
+  new TColor(id++, 146. / 255., 0. / 255., 0. / 255., "CB11_Maroon", 1.0);
+  // 1pibg
+  new TColor(id++, 219. / 255., 209. / 255., 0. / 255., "CB8_Lilac_dark", 1.0);
+  new TColor(id++, 182. / 255., 109. / 255., 255. / 255., "CB8_Lilac", 1.0);
+  // 2pibg
+  new TColor(id++, 0. / 255., 73. / 255., 73. / 255., "CB2_Forest", 1.0);
+  new TColor(id++, 35. / 255., 141. / 255., 88. / 255., "CB9_BlueGrey", 1.0);
+  kset = true;
 }

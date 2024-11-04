@@ -108,12 +108,12 @@ TH1D smear_prediction(TH1D hist, const TMatrixDSym &smear) {
 
 const std::vector<std::tuple<std::string, std::function<bool(int)>>>
     list_channel_channeldef{
-        {"2#pi BG", [](int id) { return id == 37; }},
-        {"1#pi BG", [](int id) { return id == 32 || id == 33; }},
-        {"2p2h", [](int id) { return id == 35; }},
         {"QE", [](int id) { return id == 1; }},
+        {"2p2h", [](int id) { return id == 35; }},
         {"RES", [](int id) { return id >= 2 && id <= 31; }},
         {"DIS", [](int id) { return id == 34; }},
+        {"1#pi BG", [](int id) { return id == 32 || id == 33; }},
+        {"2#pi BG", [](int id) { return id == 37; }},
     };
 
 template <typename T, size_t N = 0>
@@ -127,12 +127,12 @@ auto plot_channels(T df_in, std::string variable,
              return std::make_tuple(name,
                                     make_plots(df_in.Filter(id, {"channel"}),
                                                bins, variable, name + "_0pi"),
-                                    count * 2 - (count > 0) - (count > 1));
+                                    count * 2 - (count > 4) - (count > 5));
            else
              return std::make_tuple(name,
                                     make_plots(df_in.Filter(id, {"channel"}),
                                                variable, name + "_0pi"),
-                                    count * 2 - (count > 0) - (count > 1));
+                                    count * 2 - (count > 4) - (count > 5));
          }) |
          std::ranges::to<std::vector>();
 }
@@ -302,10 +302,18 @@ int main(int argc, char **argv) {
     });
   });
 
-  auto vars_stack = var_plots | std::views::transform([&](auto &&list) {
-                      return build_stack_from_list(list, 0.05 * xsec_inted);
-                    }) |
-                    std::ranges::to<std::vector>();
+  auto thres = 0.003;
+
+  legend_conf conf{
+      .force_include = {"QE", "RES", "DIS", "BG"},
+      .force_exclude = {"2p2h"},
+  };
+
+  auto vars_stack =
+      var_plots | std::views::transform([&](auto &&list) {
+        return build_stack_from_list(list, thres * xsec_inted, conf);
+      }) |
+      std::ranges::to<std::vector>();
 
   // auto scale_list = [&](auto &&list) {
   //   for (auto &&[name, hist, _] : list) {
@@ -337,9 +345,9 @@ int main(int argc, char **argv) {
   // scale_list(pi0_angular_plot_list);
 
   auto &&[stack_momentum, legend_momentum] =
-      build_stack_from_list(pi0_plot_list_smeared, 0.01 * xsec_inted);
-  auto &&[stack_angular, legend_angular] =
-      build_stack_from_list(pi0_angular_plot_list_smeared, 0.01 * xsec_inted);
+      build_stack_from_list(pi0_plot_list_smeared, thres * xsec_inted, conf);
+  auto &&[stack_angular, legend_angular] = build_stack_from_list(
+      pi0_angular_plot_list_smeared, thres * xsec_inted, conf);
 
   auto pi0_momentum_chi2 =
       MicroBooNE::pi0_momentum::do_chi2(&pi0_momentum_hist_smeared);
@@ -368,7 +376,7 @@ int main(int argc, char **argv) {
           "mom",
           "d#sigma/d#it{p}_{#pi^{0}} (#times 10^{#minus 38} "
           "cm^{2}/GeV/#it{c}/nucleon)",
-          "#it{p}_{#pi^{0}} (GeV/#it{c})", {.65, .45, .95, .9}, 0.,
+          "#it{p}_{#pi^{0}} (GeV/#it{c})", {.65, .45, .95, .93}, 0.,
           form_legend(&hist_momentum, pi0_momentum_chi2), "HIST", 0,
           {.top = 0.04, .bottom = 0.12});
 
@@ -377,7 +385,7 @@ int main(int argc, char **argv) {
           "ang",
           "d#sigma/dcos #theta_{#pi^{0}} (#times 10^{#minus 38} "
           "cm^{2}/rad/nucleon)",
-          "cos #theta_{#pi^{0}} (rad)", {.15, .55, .55, .85}, 0.,
+          "cos #theta_{#pi^{0}} (rad)", {.15, .55, .55, .9}, 0.,
           form_legend(&hist_angular, pi0_angular_chi2), "HIST", 0,
           {.top = 0.06, .bottom = 0.12});
 
@@ -385,7 +393,7 @@ int main(int argc, char **argv) {
     auto &&[stack, legend] = tup;
     auto plotobj = get_info(name);
     do_plot({&stack, &legend, latex.get()}, name, plotobj.ytitle, plotobj.name,
-            {.7, .55, .9, .95}, plotobj.xmax, "MicroBooNE CC #pi^{0}", "HIST",
+            {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE CC #pi^{0}", "HIST",
             plotobj.ymax_0pi, {.top = 0.04, .bottom = 0.12});
   }
 
