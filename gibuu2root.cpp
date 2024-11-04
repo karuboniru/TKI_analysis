@@ -25,11 +25,12 @@ private:
       datamap[{gibuu, charge}] = pdg;
       if (charge != 0)
         datamap[{gibuu, -charge}] = -pdg;
+      datamap[{-gibuu, -charge}] = -pdg;
     }
   }
 
 public:
-  static gibuu_to_pdg &get_instance(std::string mapfile = "") {
+  static gibuu_to_pdg &get_instance(const std::string &mapfile = "") {
     static gibuu_to_pdg instance{mapfile};
     return instance;
   }
@@ -37,7 +38,12 @@ public:
 };
 
 auto get_pdg(int gibuu, int charge) {
-  return gibuu_to_pdg::get_instance().get_pdg(gibuu, charge);
+  auto res = gibuu_to_pdg::get_instance().get_pdg(gibuu, charge);
+  if (res == 0) {
+    std::cout << "Error: no PDG code for gibuu=" << gibuu
+              << " charge=" << charge << std::endl;
+  }
+  return res;
 }
 
 class event {
@@ -113,15 +119,17 @@ public:
 
 int main(int argc, char **argv) {
   if (argc < 3) {
-    std::cout << "Usage: " << argv[0] << "<map_file> <input_file> <output_file> [neutrino id (default 14)]"
+    std::cout << "Usage: " << argv[0]
+              << "<input_file> <output_file> [neutrino id (default 14)]"
               << std::endl;
     return 1;
   }
-  std::string map_file = argv[1];
+  // std::string map_file = argv[1];
+  std::string map_file = BASEPATH "/data/gibuudata.dat";
   gibuu_to_pdg::get_instance(map_file);
-  std::string input_file = argv[2];
-  std::string output_file = argv[3];
-  int Nuid = argc > 4 ? std::stoi(argv[4]) : 14;
+  std::string input_file = argv[1];
+  std::string output_file = argv[2];
+  int Nuid = argc > 4 ? std::stoi(argv[3]) : 14;
   std::ifstream input(input_file);
   auto out_tree = std::make_unique<TTree>("out_tree", "out_tree");
   constexpr int max_n = 256;

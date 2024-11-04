@@ -190,3 +190,19 @@ target_link_libraries(microboone_pi0_gibuu PRIVATE
   ${GENERAL_LIBS}
   analysis
 )
+
+add_executable(build_jobcard build_jobcard.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(build_jobcard PRIVATE 
+boost_program_options
+)
+target_compile_definitions(
+  build_jobcard PRIVATE 
+  BASEPATH="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_compile_definitions(
+  gibuu2root PRIVATE 
+  BASEPATH="${CMAKE_CURRENT_SOURCE_DIR}"
+)
