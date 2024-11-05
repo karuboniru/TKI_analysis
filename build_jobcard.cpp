@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <boost/program_options.hpp>
 #include <format>
 #include <fstream>
@@ -253,6 +254,8 @@ int main(int argc, char **argv) {
       //
       ("T", po::value<int>()->required(), "T value")
       //
+      ("2pibg", po::value<bool>()->required(), "Include 2pi BG")
+      //
       ("mediumSwitch", po::value<bool>()->required(), "mediumSwitch")
       //
       ("flagInMedium", po::value<bool>()->required(), "flagInMedium")
@@ -271,32 +274,44 @@ int main(int argc, char **argv) {
   std::string output_file = vm["output-file"].as<std::string>();
   std::string experiment = vm["experiment"].as<std::string>();
   int T = vm["T"].as<int>();
+  bool include2pi = vm["2pibg"].as<bool>();
   bool mediumSwitch = vm["mediumSwitch"].as<bool>();
   bool flagInMedium = vm["flagInMedium"].as<bool>();
   int InMediumMode = vm["InMediumMode"].as<int>();
 
-  std::ofstream out(output_file, std::ios::trunc);
+  // upper to lower for experiment
+  std::ranges::transform(experiment, experiment.begin(),
+                         [](unsigned char c) { return std::tolower(c); });
 
-  out << common_input;
+  std::ofstream out(output_file, std::ios::trunc);
 
   if (experiment == "minerva") {
     out << build_neutrino_induced(
-               {.nuExp = 25, .FileNameFlux = "", .include2pi = true})
+               {.nuExp = 25, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
-        << build_input({.path_to_input = path_to_input})
-        << build_nl_neweN({.T = T});
+        << build_input({.path_to_input = path_to_input});
+  } else if (experiment == "t2k") {
+    out << build_neutrino_induced(
+               {.nuExp = 9, .FileNameFlux = "", .include2pi = include2pi})
+        << build_target({.Z = 6, .A = 12})
+        << build_input({.path_to_input = path_to_input});
   } else if (experiment == "microboone") {
     out << build_neutrino_induced(
                {.nuExp = 99,
                 .FileNameFlux = BASEPATH "/jobcard/microboone.dat",
-                .include2pi = true})
+                .include2pi = include2pi})
         << build_target({.Z = 18, .A = 40})
         << build_input({.numEnsembles = 3000, .path_to_input = path_to_input});
+  } else {
+    std::cerr << "Unknown experiment: " << experiment << '\n';
+    return 1;
   }
-  out << build_width_Baryon({.mediumSwitch = mediumSwitch})
+
+  out << common_input << build_width_Baryon({.mediumSwitch = mediumSwitch})
       << build_nl_neweN({.T = T})
       << build_XsectionRatios_input(
              {.flagInMedium = flagInMedium, .InMediumMode = InMediumMode})
       << '\n';
+
   return 0;
 }
