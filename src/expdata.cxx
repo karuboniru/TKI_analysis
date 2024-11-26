@@ -44,7 +44,7 @@ TH1D get_hist_impl() {
   auto hist_from_root =
       (TH1D *)((pizero_file.Get<TList>("neutronmomentum"))->At(0));
 
-  TH1D data("data_IApN_pi0", "MINERvA #pi^{0} Data", dimension,
+  TH1D data("data_IApN_pi0", "MINERvA#pi^{0} Data", dimension,
             bin_edges.data());
 
   auto cov = get_cov();
@@ -95,7 +95,7 @@ std::array<double, dimension + 1> get_binning() {
 TH1D get_hist_impl() {
   auto bin_edges = get_binning();
   auto hist_from_root = (TH1D *)((pizero_file.Get<TList>("dalphat"))->At(0));
-  TH1D data("data_dalphat_pi0", "MINERvA #pi^{0} Data", dimension,
+  TH1D data("data_dalphat_pi0", "MINERvA#pi^{0} Data", dimension,
             bin_edges.data());
 
   auto cov = get_cov();
@@ -145,7 +145,7 @@ TH1D get_hist_impl() {
   auto hist_from_root =
       (TH1D *)((zeropi_file.Get<TList>("neutronmomentum"))->At(0));
 
-  TH1D data("data_IApN_0pi", "MINERvA 0#kern[0.1]{#pi} Data", dimension,
+  TH1D data("data_IApN_0pi", "MINERvA 0#pi Data", dimension,
             bin_edges.data());
 
   auto cov = get_cov();
@@ -194,7 +194,7 @@ std::array<double, dimension + 1> get_binning() {
 TH1D get_hist_impl() {
   auto bin_edges = get_binning();
   auto hist_from_root = (TH1D *)((zeropi_file.Get<TList>("dalphat"))->At(0));
-  TH1D data("data_dalphat_0pi", "MINERvA 0#kern[0.1]{#pi} Data", dimension,
+  TH1D data("data_dalphat_0pi", "MINERvA 0#pi Data", dimension,
             bin_edges.data());
 
   auto cov = MINERvA_TKI::ZeroPi::dalphat::get_cov();
@@ -264,7 +264,7 @@ const TMatrixDSym &get_cov() {
 TH1D get_hist_impl() {
   auto data = T2K_STK_dat_file.Get<TH1D>("Result");
   auto bin_edges = get_binning();
-  TH1D data_hist("data_IApN_T2K", "T2K #pi^{0} Data", dimension,
+  TH1D data_hist("data_IApN_T2K", "T2K#pi^{0} Data", dimension,
                  bin_edges.data());
   for (size_t i = 0; i < dimension; i++) {
     data_hist.SetBinContent(i + 1,
@@ -292,7 +292,7 @@ std::array<double, 9> get_binning() {
 
 TH1D get_hist_impl() {
   auto bin_edges = get_binning();
-  TH1D data("data_pion_momentum", "MicroBooNE #pi^{0} Data", dimension,
+  TH1D data("data_pion_momentum", "MicroBooNE#pi^{0} Data", dimension,
             bin_edges.data());
   std::array<double, 8> exp_value{0.66, 1.92, 2.44, 1.15,
                                   0.73, 0.34, 0.18, 0.09};
@@ -371,7 +371,7 @@ std::array<double, dimension + 1> get_binning() {
 
 TH1D get_hist_impl() {
   auto bin_edges = get_binning();
-  TH1D data("data_pion_angular", "MicroBooNE #pi^{0} Data", dimension,
+  TH1D data("data_pion_angular", "MicroBooNE#pi^{0} Data", dimension,
             bin_edges.data());
   std::array<double, 7> exp_value{.1, .17, .20, .19, .23, .40, .49};
   auto &cov = get_cov();

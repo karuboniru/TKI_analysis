@@ -51,10 +51,10 @@ const std::vector<std::tuple<std::string, std::function<bool(size_t)>>>
 
 std::string pion_pretty_name(std::string s) {
   if (s == "1pi0") {
-    return "1 #pi^{#lower[0.2]{0}}";
+    return "1#pi^{#lower[0.2]{0}}";
   }
   if (s == "Mpi0") {
-    return "multi- #pi^{#lower[0.2]{0}}";
+    return "multi-#pi^{#lower[0.2]{0}}";
   }
   return s;
 }
@@ -74,7 +74,7 @@ plot_data get_info(const std::string &varname) {
     return plot_data{30, -1., 1., "#delta p_{L}"};
   }
   if (varname == "p_cos_theta") {
-    return plot_data{30, -1., 1., "cos #theta_{p}"};
+    return plot_data{30, -1., 1., "cos#theta_{p}"};
   }
   if (varname == "p_theta") {
     return plot_data{30, 0., 180., "#theta_{p}"};
@@ -378,7 +378,7 @@ int main(int argc, char *argv[]) {
   //   auto plot_ent = get_info(name);
   //   do_plot({&stack, &leg}, name + "_pi0", plot_ent.ytitle, plot_ent.name,
   //           {0.55, 0.55, 0.85, 0.9}, 0.,
-  //           "GiBUU 23p3 MINERvA #pi^{0} " + runtag, "HIST",
+  //           "GiBUU 23p3 MINERvA#pi^{0} " + runtag, "HIST",
   //           plot_ent.ymax_pi0);
   // }
 

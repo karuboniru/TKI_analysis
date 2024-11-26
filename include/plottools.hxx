@@ -12,6 +12,7 @@
 #include <TStyle.h>
 #include <iostream>
 #include <string>
+#include <variant>
 
 template <typename PtrType, typename Base>
 concept IsBasePtr = std::is_base_of_v<

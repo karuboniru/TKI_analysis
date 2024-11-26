@@ -59,7 +59,7 @@ const char *const common_input = R"(
       invariantMasscut=5.       ! cut events with invariant mass above
 
       DIScutW=3.0               ! DIS sets in at this mass (in GeV)
-      DIScutwidth=0.2
+      DIScutwidth=0.1
 
       invariantMasscut=20.      ! mass cuts on Wrec
       invariantMassCut_BG = 20. ! mass cuts on Wrec for background

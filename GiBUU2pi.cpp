@@ -34,37 +34,37 @@
 //     std::tuple<std::string, std::function<bool(const NeutrinoEvent &)>>, 6>
 //     pion_channels{
 //         std::tuple<std::string, std::function<bool(const NeutrinoEvent &)>>{
-//             "2#kern[0.2]{#pi}^{+}", // +2
+//             "2#pi^{+}", // +2
 //             [](const NeutrinoEvent &event) {
 //               return event.count_post(211) == 2 &&
 //                      event.count_post(-211) == 0 && event.count_post(111) ==
 //                      0;
 //             }},
-//         {"1#kern[0.2]{#pi}^{+}1#kern[0.2]{#pi}^{0}", // +1
+//         {"1#pi^{0}", // +1
 //          [](const NeutrinoEvent &event) {
 //            return event.count_post(211) == 1 && event.count_post(-211) == 0
 //            &&
 //                   event.count_post(111) == 1;
 //          }},
-//         {"1#kern[0.2]{#pi}^{+}1#kern[0.2]{#pi}^{-}", // 0
+//         {"1#pi^{-}", // 0
 //          [](const NeutrinoEvent &event) {
 //            return event.count_post(211) == 1 && event.count_post(-211) == 1
 //            &&
 //                   event.count_post(111) == 0;
 //          }},
-//         {"2#kern[0.2]{#pi}^{0}", // 0
+//         {"2#pi^{0}", // 0
 //          [](const NeutrinoEvent &event) {
 //            return event.count_post(211) == 0 && event.count_post(-211) == 0
 //            &&
 //                   event.count_post(111) == 2;
 //          }},
-//         {"1#kern[0.2]{#pi}^{0}1#kern[0.2]{#pi}^{-}", // -1
+//         {"1#pi^{-}", // -1
 //          [](const NeutrinoEvent &event) {
 //            return event.count_post(211) == 0 && event.count_post(-211) == 1
 //            &&
 //                   event.count_post(111) == 1;
 //          }},
-//         {"2#kern[0.2]{#pi}^{-}", // -2
+//         {"2#pi^{-}", // -2
 //          [](const NeutrinoEvent &event) {
 //            return event.count_post(211) == 0 && event.count_post(-211) == 2
 //            &&
@@ -85,17 +85,17 @@ const std::array<
 const std::array<std::tuple<std::string, std::function<bool(int, double)>>, 3>
     interaction_cut{
         // std::tuple<std::string, std::function<bool(int)>>{
-        //     "2#kern[0.2]{#pi} non-BG", [](int c) { return c != 37; }},
+        //     "2#pi non-BG", [](int c) { return c != 37; }},
         std::tuple<std::string, std::function<bool(int, double)>>{
-            "2#kern[0.2]{#pi} RES",
+            "2#pi RES",
             [](int c, double) { return c >= 2 && c <= 31; }},
         // std::tuple<std::string, std::function<bool(int, double)>>{
-        //     "2#kern[0.2]{#pi} SIS",
+        //     "2#pi SIS",
         //     [](int c, double W) { return c == 34 && W <= 3; }},
         std::tuple<std::string, std::function<bool(int, double)>>{
-            "2#kern[0.2]{#pi} DIS", [](int c, double W) { return c == 34; }},
+            "2#pi DIS", [](int c, double W) { return c == 34; }},
         std::tuple<std::string, std::function<bool(int, double)>>{
-            "2#kern[0.2]{#pi} BG", [](int c, double) { return c == 37; }},
+            "2#pi BG", [](int c, double) { return c == 37; }},
     };
 
 const auto idlist =
@@ -224,21 +224,21 @@ int main(int argc, char **argv) {
                    event.count_post(111) ==
                1;
       },
-      {"EventRecord"}, "1#kern[0.2]{#pi}^{+} only");
+      {"EventRecord"}, "1#pi^{+} only");
   auto plot_single_pion = df_single_pion.Histo1D(
-      {"1#kern[0.2]{#pi}", "1#kern[0.2]{#pi}", nbins, 0.8, 4.}, "W", "weight");
+      {"1#pi", nbins, 0.8, 4.}, "W", "weight");
   auto plot_single_pion_res =
       df_single_pion
           .Filter([](int channel) { return channel >= 2 && channel <= 31; },
                   {"channel"})
           .Histo1D(
-              {"1#kern[0.2]{#pi} RES", "1#kern[0.2]{#pi} RES", nbins, 0.8, 4.},
+              {"1#pi RES", nbins, 0.8, 4.},
               "W", "weight");
   auto plot_single_pion_non_bg =
       df_single_pion
           .Filter([](int channel) { return channel != 32 && channel != 33; },
                   {"channel"})
-          .Histo1D({"1#kern[0.2]{#pi} non-BG", "1#kern[0.2]{#pi} non-BG", nbins,
+          .Histo1D({"1#pi non-BG", nbins,
                     0.8, 4.},
                    "W", "weight");
   auto plot_list =

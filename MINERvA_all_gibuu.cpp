@@ -95,7 +95,7 @@
 //     return plot_data{30, -1., 1., "#delta p_{L}"};
 //   }
 //   if (varname == "p_cos_theta") {
-//     return plot_data{30, -1., 1., "cos #theta_{p}"};
+//     return plot_data{30, -1., 1., "cos#theta_{p}"};
 //   }
 //   if (varname == "p_theta") {
 //     return plot_data{30, 0., 180., "#theta_{p}"};

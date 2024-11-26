@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <boost/program_options.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <cmath>
 #include <print>
 #include <ranges>
@@ -59,7 +61,16 @@ plot_data get_info(const std::string &varname) {
                      .name = "#it{W} (GeV)",
                      .ytitle =
                          "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
-                     .ymax_0pi = 0.15};
+                     .ymax_0pi = 0.25};
+  }
+  if (varname == "Q2") {
+    return plot_data{.bins = 30,
+                     .xmin = 0.,
+                     .xmax = 3.,
+                     .name = "#it{Q}^{2} (GeV^{#kern[0.3]{2}})",
+                     .ytitle = "d#sigma/d#it{Q}^{2} (10^{#minus 38} "
+                               "cm^{2}/GeV^{#kern[0.3]{2}}/nucleon)",
+                     .ymax_0pi = 0.2};
   }
 
   return {};
@@ -223,6 +234,13 @@ int main(int argc, char **argv) {
                     return had_system.M();
                   },
                   {"InitNeutrino", "PrimaryLepton", "InitNucleon"})
+          .Define("Q2",
+                  [](const TLorentzVector &InitNeutrino,
+                     const TLorentzVector &PrimaryLepton) {
+                    auto lvq = InitNeutrino - PrimaryLepton;
+                    return -lvq.M2();
+                  },
+                  {"InitNeutrino", "PrimaryLepton"})
       // .Define("proton",
       //         [](NeutrinoEvent &e) {
       //           ROOT::RVec<TLorentzVector> p;
@@ -271,7 +289,7 @@ int main(int argc, char **argv) {
                                             pi0_angular_binning.data()},
                                            "costh_pi", "weight");
 
-  auto vars = std::to_array({"W"});
+  auto vars = std::to_array({"W", "Q2"});
   auto var_plots = vars | std::views::transform([&](std::string name) {
                      return plot_channels(data_cut, std::move(name));
                    }) |
@@ -353,7 +371,11 @@ int main(int argc, char **argv) {
       MicroBooNE::pi0_momentum::do_chi2(&pi0_momentum_hist_smeared);
   auto pi0_angular_chi2 =
       MicroBooNE::pi0_angular::do_chi2(&pi0_angular_hist_smeared);
-
+  nlohmann::json json_out;
+  json_out["chi2_momentum"] = pi0_momentum_chi2;
+  json_out["chi2_angular"] = pi0_angular_chi2;
+  std::fstream out("chi2.json", std::ios::out);
+  out << json_out.dump(2);
   std::println("Chi2 Results: \n"
                " - Momentum: {}\n"
                " - Angular: {}\n",
@@ -383,9 +405,9 @@ int main(int argc, char **argv) {
   do_plot({&hist_angular, &pi0_angular_hist_smeared, &stack_angular,
            &legend_angular, latex.get()},
           "ang",
-          "d#sigma/dcos #theta_{#pi^{0}} (#times 10^{#minus 38} "
+          "d#sigma/dcos#theta_{#pi^{0}} (#times 10^{#minus 38} "
           "cm^{2}/rad/nucleon)",
-          "cos #theta_{#pi^{0}} (rad)", {.15, .55, .55, .9}, 0.,
+          "cos#theta_{#pi^{0}} (rad)", {.15, .55, .55, .9}, 0.,
           form_legend(&hist_angular, pi0_angular_chi2), "HIST", 0,
           {.top = 0.06, .bottom = 0.12});
 
@@ -393,7 +415,7 @@ int main(int argc, char **argv) {
     auto &&[stack, legend] = tup;
     auto plotobj = get_info(name);
     do_plot({&stack, &legend, latex.get()}, name, plotobj.ytitle, plotobj.name,
-            {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE CC #pi^{0}", "HIST",
+            {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE CC#pi^{0}", "HIST",
             plotobj.ymax_0pi, {.top = 0.04, .bottom = 0.12});
   }
 

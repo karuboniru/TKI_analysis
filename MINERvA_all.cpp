@@ -29,7 +29,7 @@ plot_data get_info(std::string varname) {
     return plot_data{80, -1., 1., "#delta p_{L}"};
   }
   if (varname == "p_cos_theta") {
-    return plot_data{80, -1., 1., "cos #theta_{p}"};
+    return plot_data{80, -1., 1., "cos#theta_{p}"};
   }
   if (varname == "p_theta") {
     return plot_data{80, 0., 180., "#theta_{p}"};

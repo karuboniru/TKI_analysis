@@ -20,6 +20,9 @@
 #include <TVector3.h>
 #include <boost/program_options.hpp>
 
+#include <nlohmann/json.hpp>
+
+
 #include <cmath>
 #include <functional>
 #include <memory>
@@ -51,10 +54,10 @@ const std::vector<std::tuple<std::string, std::function<bool(size_t)>>>
 
 std::string pion_pretty_name(std::string s) {
   if (s == "1pi0") {
-    return "1 #pi^{#lower[0.2]{0}}";
+    return "1#pi^{#lower[0.2]{0}}";
   }
   if (s == "Mpi0") {
-    return "multi- #pi^{#lower[0.2]{0}}";
+    return "multi-#pi^{#lower[0.2]{0}}";
   }
   return s;
 }
@@ -82,7 +85,7 @@ plot_data get_info(std::string varname) {
   }
   if (varname == "p_cos_theta") {
     return plot_data{
-        .bins = 30, .xmin = -1., .xmax = 1., .name = "cos #theta_{p}"};
+        .bins = 30, .xmin = -1., .xmax = 1., .name = "cos#theta_{p}"};
   }
   if (varname == "p_theta") {
     return plot_data{
@@ -290,6 +293,7 @@ int main(int argc, char *argv[]) {
   auto additional_text = vm["add-text"].as<std::string>();
   auto tag_tki_base = vm["add-label-tki"].as<char>();
   auto tag_var_base = vm["add-label-var"].as<char>();
+  std::cout << "Processing " << n_runs << " files" << std::endl;
 
   TH1::AddDirectory(false);
   ROOT::EnableImplicitMT();
@@ -581,6 +585,18 @@ int main(int argc, char *argv[]) {
   std::cout << "shape_only_chi2_dalphat_0pi " << shape_only_chi2_dalphat_0pi
             << std::endl;
 
+  nlohmann::json json_out;
+  json_out["chi2_IApN_pi0"] = chi2_IApN_pi0;
+  json_out["chi2_IApN_0pi"] = chi2_IApN_0pi;
+  json_out["chi2_dalphat_pi0"] = chi2_dalphat_pi0;
+  json_out["chi2_dalphat_0pi"] = chi2_dalphat_0pi;
+  json_out["shape_only_chi2_IApN_pi0"] = shape_only_chi2_IApN_pi0;
+  json_out["shape_only_chi2_IApN_0pi"] = shape_only_chi2_IApN_0pi;
+  json_out["shape_only_chi2_dalphat_pi0"] = shape_only_chi2_dalphat_pi0;
+  json_out["shape_only_chi2_dalphat_0pi"] = shape_only_chi2_dalphat_0pi;
+  std::fstream json_file("chi2.json", std::ios::out);
+  json_file << json_out.dump(2) << std::endl;
+
   // if (!channel_merged->count(37)) {
   //   std::cout << "No 2pi BG channel found, marking legend as w/o 2#piBG"
   //             << std::endl;
@@ -670,7 +686,7 @@ int main(int argc, char *argv[]) {
     auto xmax = plot_ent.xmax_0pi == 0. ? plot_ent.xmax : plot_ent.xmax_0pi;
     do_plot({&stack, &leg, build_add_text(tag_var_base).get()}, name + "_0pi",
             plot_ent.ytitle, plot_ent.name, {0.65, 0.45, 0.95, 0.93}, xmax,
-            "MINERvA 0#kern[0.1]{#pi}", "HIST", plot_ent.ymax_0pi,
+            "MINERvA 0#pi", "HIST", plot_ent.ymax_0pi,
             {.top = plot_ent.ymax_0pi < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }
   for (auto &&[name, list] : std::views::zip(vars_pi0, stacked_vars_pi0)) {
@@ -679,7 +695,7 @@ int main(int argc, char *argv[]) {
     auto xmax = plot_ent.xmax_pi0 == 0. ? plot_ent.xmax : plot_ent.xmax_pi0;
     do_plot({&stack, &leg, build_add_text(tag_var_base).get()}, name + "_pi0",
             plot_ent.ytitle, plot_ent.name, {0.65, 0.45, 0.95, 0.93}, xmax,
-            "MINERvA #pi^{0}", "HIST", plot_ent.ymax_pi0,
+            "MINERvA#pi^{0}", "HIST", plot_ent.ymax_pi0,
             {.top = plot_ent.ymax_pi0 < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }
   /////////////////////

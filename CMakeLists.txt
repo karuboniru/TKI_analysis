@@ -14,9 +14,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 # Locate CERN ROOT
 find_package(ROOT REQUIRED COMPONENTS RIO Tree)
 
-# enable O3
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native")
-
 # Locate NuWro
 if (DEFINED NUWRO)
   set(NUWRO_DIR ${NUWRO})
@@ -174,13 +171,13 @@ target_link_libraries(t2k_stk_gibuu PRIVATE
 )
 
 
-add_executable(GiBUU2pi GiBUU2pi.cpp)
+#add_executable(GiBUU2pi GiBUU2pi.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(GiBUU2pi PRIVATE 
-  ${GENERAL_LIBS}
-  analysis
-)
+#target_link_libraries(GiBUU2pi PRIVATE 
+#  ${GENERAL_LIBS}
+#  analysis
+#)
 
 
 add_executable(microboone_pi0_gibuu microboone_pi0_gibuu.cpp)
