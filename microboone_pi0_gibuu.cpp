@@ -298,6 +298,7 @@ int main(int argc, char **argv) {
   ////////////////////////
 
   std::cout << "Finished data preparation\n";
+  auto file = std::make_unique<TFile>("dtl_all.root", "RECREATE");
 
   ////////////////////////
   auto pi0_momentum_hist_smeared = smear_prediction(
@@ -308,6 +309,8 @@ int main(int argc, char **argv) {
     auto scale_factor = 1. / n_runs / 10;
     pi0_momentum_hist_smeared.Scale(scale_factor, "WIDTH");
     pi0_angular_hist_smeared.Scale(scale_factor, "WIDTH");
+    file->Add(&pi0_momentum_hist_smeared);
+    file->Add(&pi0_angular_hist_smeared);
   }
 
   auto xsec_inted = pi0_angular_hist_smeared.Integral("WIDTH");
@@ -405,11 +408,13 @@ int main(int argc, char **argv) {
   do_plot({&hist_angular, &pi0_angular_hist_smeared, &stack_angular,
            &legend_angular, latex.get()},
           "ang",
-          "d#sigma/dcos#theta_{#pi^{0}} (#times 10^{#minus 38} "
-          "cm^{2}/rad/nucleon)",
-          "cos#theta_{#pi^{0}} (rad)", {.15, .55, .55, .9}, 0.,
+          "d#sigma/dcos#it{#theta}_{#pi^{0}} (#times 10^{#minus 38} "
+          "cm^{2}/nucleon)",
+          "cos#it{#theta}_{#pi^{0}}", {.15, .55, .55, .9}, 0.,
           form_legend(&hist_angular, pi0_angular_chi2), "HIST", 0,
           {.top = 0.06, .bottom = 0.12});
+  file->Add(&hist_momentum);
+  file->Add(&hist_angular);
 
   for (auto &&[name, tup] : std::views::zip(vars, vars_stack)) {
     auto &&[stack, legend] = tup;
@@ -418,6 +423,7 @@ int main(int argc, char **argv) {
             {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE CC#pi^{0}", "HIST",
             plotobj.ymax_0pi, {.top = 0.04, .bottom = 0.12});
   }
+  file->Write();
 
   return 0;
 }
