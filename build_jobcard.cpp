@@ -37,6 +37,7 @@ struct width_Baryon {
 struct XsectionRatios_input {
   bool flagInMedium;
   int InMediumMode;
+  double alpha;
 };
 
 const char *const common_input = R"(
@@ -233,9 +234,10 @@ std::string build_XsectionRatios_input(const XsectionRatios_input &x) {
 
       flagInMedium = {}         ! turns off any in-medium changes in deciding to keep an event
       InMediumMode = {}          ! BB -> BB* is reduced following Song,Ko, PRC91, 014901 (2015), NN elastic reduced according to Machleidt-Li
+      alpha = {}               ! parameter in the Song-Ko exponential suppression of NN->NDelta Xsection
 /
 )",
-      bool_to_char(x.flagInMedium), x.InMediumMode);
+      bool_to_char(x.flagInMedium), x.InMediumMode, x.alpha);
 }
 
 int main(int argc, char **argv) {
@@ -258,9 +260,13 @@ int main(int argc, char **argv) {
       //
       ("mediumSwitch", po::value<bool>()->required(), "mediumSwitch")
       //
-      ("flagInMedium", po::value<bool>()->required(), "flagInMedium")
+      ("flagInMedium", po::value<bool>()->required(),
+       "NN Cross Section (Machleidt-Li and Song-Ko)")
       //
-      ("InMediumMode", po::value<int>()->default_value(2), "InMediumMode");
+      ("InMediumMode", po::value<int>()->default_value(2),
+       "Oset width modification for Delta")(
+          "alpha", po::value<double>()->default_value(1.2),
+          "alpha for Song-Ko");
   po::variables_map vm;
   try {
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -278,6 +284,7 @@ int main(int argc, char **argv) {
   bool mediumSwitch = vm["mediumSwitch"].as<bool>();
   bool flagInMedium = vm["flagInMedium"].as<bool>();
   int InMediumMode = vm["InMediumMode"].as<int>();
+  double alpha = vm["alpha"].as<double>();
 
   // upper to lower for experiment
   std::ranges::transform(experiment, experiment.begin(),
@@ -309,8 +316,9 @@ int main(int argc, char **argv) {
 
   out << common_input << build_width_Baryon({.mediumSwitch = mediumSwitch})
       << build_nl_neweN({.T = T})
-      << build_XsectionRatios_input(
-             {.flagInMedium = flagInMedium, .InMediumMode = InMediumMode})
+      << build_XsectionRatios_input({.flagInMedium = flagInMedium,
+                                     .InMediumMode = InMediumMode,
+                                     .alpha = alpha})
       << '\n';
 
   return 0;
