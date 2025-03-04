@@ -236,11 +236,14 @@ int main(int argc, char **argv) {
               "W", "weight");
   auto plot_single_pion_non_bg =
       df_single_pion
-          .Filter([](int channel) { return channel != 32 && channel != 33; },
-                  {"channel"})
-          .Histo1D({"1#pi non-BG", nbins,
-                    0.8, 4.},
-                   "W", "weight");
+          .Filter(
+              [](int channel) {
+                return channel == 34 || (channel >= 2 && channel <= 31);
+              },
+              {"channel"})
+          .Histo1D(
+              {"1#kern[0.2]{#pi} DIS", "1#kern[0.2]{#pi} DIS", nbins, 0.8, 4.},
+              "W", "weight");
   auto plot_list =
       std::views::cartesian_product(interaction_cut, pion_channels) |
       std::views::enumerate |
@@ -292,10 +295,10 @@ int main(int argc, char **argv) {
             << std::endl;
 
   plot_single_pion->SetLineColor(kBlack);
-  plot_single_pion->SetLineWidth(3);
+  plot_single_pion->SetLineWidth(4);
   plot_single_pion_non_bg->SetLineColor(kRed);
   plot_single_pion_non_bg->SetLineWidth(2);
-  plot_single_pion_res->SetLineColor(kOrange);
+  plot_single_pion_res->SetLineColor(kViolet);
   plot_single_pion_res->SetLineWidth(2);
   std::string x{"#it{W} (GeV)"},
       y{"d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)"};
