@@ -123,7 +123,7 @@ plot_data get_info(std::string varname) {
                      .ytitle =
                          "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
                      .ymax_0pi = 0.5,
-                     .ymax_pi0 = .2,
+                     .ymax_pi0 = .18,
                      .xmax_0pi = 2.,
                      .xmax_pi0 = 4.};
   }

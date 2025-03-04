@@ -61,7 +61,7 @@ plot_data get_info(const std::string &varname) {
                      .name = "#it{W} (GeV)",
                      .ytitle =
                          "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
-                     .ymax_0pi = 0.25};
+                     .ymax_0pi = 0.17};
   }
   if (varname == "Q2") {
     return plot_data{.bins = 30,

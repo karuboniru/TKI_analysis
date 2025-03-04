@@ -264,7 +264,7 @@ const TMatrixDSym &get_cov() {
 TH1D get_hist_impl() {
   auto data = T2K_STK_dat_file.Get<TH1D>("Result");
   auto bin_edges = get_binning();
-  TH1D data_hist("data_IApN_T2K", "T2K#pi^{0} Data", dimension,
+  TH1D data_hist("data_IApN_T2K", "T2K 0#pi Data", dimension,
                  bin_edges.data());
   for (size_t i = 0; i < dimension; i++) {
     data_hist.SetBinContent(i + 1,
