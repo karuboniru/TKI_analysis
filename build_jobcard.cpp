@@ -217,8 +217,8 @@ std::string build_width_Baryon(const width_Baryon &w) {
   return std::format(
       R"(
 &width_Baryon
-      mediumSwitch = {}
-      mediumSwitch_Delta=.true.
+      mediumSwitch = {0}
+      mediumSwitch_Delta={0}
       mediumSwitch_coll=.false.
 /
 )",
