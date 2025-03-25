@@ -28,6 +28,7 @@ struct input {
 
 struct nl_neweN {
   int T;
+  int T_2p2h;
 };
 
 struct width_Baryon {
@@ -207,10 +208,11 @@ std::string build_nl_neweN(const nl_neweN &n) {
 !     new_eNres = F
 
       T = {}
+      T2p2h = {}
       ME_ODW = 2
 /
 )",
-      n.T);
+      n.T, n.T_2p2h);
 }
 
 std::string build_width_Baryon(const width_Baryon &w) {
@@ -243,30 +245,19 @@ std::string build_XsectionRatios_input(const XsectionRatios_input &x) {
 int main(int argc, char **argv) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
-  desc.add_options()
-      //
-      ("path-to-input", po::value<std::string>()->required(),
-       "Path to BUUInput")
-      //
-      ("output-file", po::value<std::string>()->required(),
-       "Output JobCard file")
-      //
-      ("experiment", po::value<std::string>()->required(),
-       "minerva or microboone")
-      //
-      ("T", po::value<int>()->required(), "T value")
-      //
-      ("2pibg", po::value<bool>()->required(), "Include 2pi BG")
-      //
-      ("mediumSwitch", po::value<bool>()->required(), "mediumSwitch")
-      //
-      ("flagInMedium", po::value<bool>()->required(),
-       "NN Cross Section (Machleidt-Li and Song-Ko)")
-      //
-      ("InMediumMode", po::value<int>()->default_value(2),
-       "Oset width modification for Delta")(
-          "alpha", po::value<double>()->default_value(1.2),
-          "alpha for Song-Ko");
+  // clang-format off
+      desc.add_options()
+                  ("path-to-input", po::value<std::string>()->required(), "Path to BUUInput")
+                  ("output-file",   po::value<std::string>()->required(), "Output JobCard file")
+                  ("experiment",    po::value<std::string>()->required(), "minerva or microboone")
+                  ("T",             po::value<int>()->default_value(1),         "T value")
+                  ("T2p2h",         po::value<int>()->default_value(0),         "T value for 2p2h process")
+                  ("2pibg",         po::value<bool>()->required(),              "Include 2pi BG")
+                  ("mediumSwitch",  po::value<bool>()->required(),              "mediumSwitch")
+                  ("flagInMedium",  po::value<bool>()->required(),              "NN Cross Section (Machleidt-Li and Song-Ko)")
+                  ("InMediumMode",  po::value<int>()->default_value(2),         "Oset width modification for Delta")
+                  ("alpha",         po::value<double>()->default_value(1.2),      "alpha for Song-Ko");
+  // clang-format on
   po::variables_map vm;
   try {
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
