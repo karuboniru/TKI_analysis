@@ -23,7 +23,7 @@ struct input {
   double delta_T = 0.1;
   int num_runs_SameEnergy = 10;
   std::string path_to_input;
-  std::string version = "2023";
+  std::string version;
 };
 
 struct nl_neweN {
@@ -256,7 +256,8 @@ int main(int argc, char **argv) {
                   ("mediumSwitch",  po::value<bool>()->required(),              "mediumSwitch")
                   ("flagInMedium",  po::value<bool>()->required(),              "NN Cross Section (Machleidt-Li and Song-Ko)")
                   ("InMediumMode",  po::value<int>()->default_value(2),         "Oset width modification for Delta")
-                  ("alpha",         po::value<double>()->default_value(1.2),      "alpha for Song-Ko");
+                  ("alpha",         po::value<double>()->default_value(1.2),      "alpha for Song-Ko")
+                  ("version",         po::value<std::string>()->default_value("2025"),      "GiBUU version");
   // clang-format on
   po::variables_map vm;
   try {
@@ -282,24 +283,27 @@ int main(int argc, char **argv) {
                          [](unsigned char c) { return std::tolower(c); });
 
   std::ofstream out(output_file, std::ios::trunc);
+  auto version = vm["version"].as<std::string>();
 
   if (experiment == "minerva") {
     out << build_neutrino_induced(
                {.nuExp = 25, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
-        << build_input({.path_to_input = path_to_input});
+        << build_input({.path_to_input = path_to_input, .version = version});
   } else if (experiment == "t2k") {
     out << build_neutrino_induced(
                {.nuExp = 9, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
-        << build_input({.path_to_input = path_to_input});
+        << build_input({.path_to_input = path_to_input, .version = version});
   } else if (experiment == "microboone") {
     out << build_neutrino_induced(
                {.nuExp = 99,
                 .FileNameFlux = BASEPATH "/jobcard/microboone.dat",
                 .include2pi = include2pi})
         << build_target({.Z = 18, .A = 40})
-        << build_input({.numEnsembles = 3000, .path_to_input = path_to_input});
+        << build_input({.numEnsembles = 3000,
+                        .path_to_input = path_to_input,
+                        .version = version});
   } else {
     std::cerr << "Unknown experiment: " << experiment << '\n';
     return 1;
