@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
 
   legend_conf conf{
       .force_include = {"QE", "RES", "DIS", "BG"},
-      .force_exclude = {"2p2h"},
+      // .force_exclude = {"2p2h"},
   };
 
   auto vars_stack =
