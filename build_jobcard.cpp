@@ -272,6 +272,7 @@ int main(int argc, char **argv) {
   std::string output_file = vm["output-file"].as<std::string>();
   std::string experiment = vm["experiment"].as<std::string>();
   int T = vm["T"].as<int>();
+  int T2p2h = vm["T2p2h"].as<int>();
   bool include2pi = vm["2pibg"].as<bool>();
   bool mediumSwitch = vm["mediumSwitch"].as<bool>();
   bool flagInMedium = vm["flagInMedium"].as<bool>();
@@ -310,7 +311,7 @@ int main(int argc, char **argv) {
   }
 
   out << common_input << build_width_Baryon({.mediumSwitch = mediumSwitch})
-      << build_nl_neweN({.T = T})
+      << build_nl_neweN({.T = T, .T_2p2h = T2p2h})
       << build_XsectionRatios_input({.flagInMedium = flagInMedium,
                                      .InMediumMode = InMediumMode,
                                      .alpha = alpha})
