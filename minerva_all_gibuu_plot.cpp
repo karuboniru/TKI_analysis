@@ -22,7 +22,6 @@
 
 #include <nlohmann/json.hpp>
 
-
 #include <cmath>
 #include <functional>
 #include <memory>
@@ -123,7 +122,7 @@ plot_data get_info(std::string varname) {
                      .ytitle =
                          "d#sigma/d#it{W} (10^{#minus 38} cm^{2}/GeV/nucleon)",
                      .ymax_0pi = 0.5,
-                     .ymax_pi0 = .18,
+                     .ymax_pi0 = .35,
                      .xmax_0pi = 2.,
                      .xmax_pi0 = 4.};
   }
@@ -382,7 +381,7 @@ int main(int argc, char *argv[]) {
   std::ranges::sort(plot_list_W, [](auto &t1, auto &t2) -> bool {
     auto name1 = std::get<0>(t1);
     auto name2 = std::get<0>(t2);
-    auto to_var = [](const std::string& x) -> short {
+    auto to_var = [](const std::string &x) -> short {
       if (x.contains("2p2h"))
         return 0;
       if (x.contains("QE"))

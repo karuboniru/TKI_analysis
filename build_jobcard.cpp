@@ -41,6 +41,10 @@ struct XsectionRatios_input {
   double alpha;
 };
 
+struct Lepton2p2h {
+  int Adep{2};
+};
+
 const char *const common_input = R"(
 &nl_fluxcuts
       Enu_lower_cut    = 0.0
@@ -242,6 +246,16 @@ std::string build_XsectionRatios_input(const XsectionRatios_input &x) {
       bool_to_char(x.flagInMedium), x.InMediumMode, x.alpha);
 }
 
+std::string build_Lepton2p2h(const Lepton2p2h &input) {
+  return std::format(
+      R"(
+&Lepton2p2h
+      Adep = {}
+/
+)",
+      input.Adep);
+}
+
 int main(int argc, char **argv) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
@@ -257,6 +271,7 @@ int main(int argc, char **argv) {
                   ("flagInMedium",  po::value<bool>()->required(),              "NN Cross Section (Machleidt-Li and Song-Ko)")
                   ("InMediumMode",  po::value<int>()->default_value(2),         "Oset width modification for Delta")
                   ("alpha",         po::value<double>()->default_value(1.2),      "alpha for Song-Ko")
+                  ("adep",         po::value<int>()->default_value(2),      "Adep for 2p2h")
                   ("version",         po::value<std::string>()->default_value("2025"),      "GiBUU version");
   // clang-format on
   po::variables_map vm;
@@ -278,6 +293,7 @@ int main(int argc, char **argv) {
   bool flagInMedium = vm["flagInMedium"].as<bool>();
   int InMediumMode = vm["InMediumMode"].as<int>();
   double alpha = vm["alpha"].as<double>();
+  int adep = vm["adep"].as<int>();
 
   // upper to lower for experiment
   std::ranges::transform(experiment, experiment.begin(),
@@ -315,7 +331,7 @@ int main(int argc, char **argv) {
       << build_XsectionRatios_input({.flagInMedium = flagInMedium,
                                      .InMediumMode = InMediumMode,
                                      .alpha = alpha})
-      << '\n';
+      << build_Lepton2p2h({.Adep = adep}) << '\n';
 
   return 0;
 }
