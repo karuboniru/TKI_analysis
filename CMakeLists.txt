@@ -37,10 +37,10 @@ include_directories(${ROOT_INCLUDE_DIRS} include)
 
 set(Dict_HEADERS include/tkigeneral.h
                       include/tkievent.h)
-set(COMMON_TOOL src/dochi2.cxx 
-                src/expdata.cxx 
-                src/MINERvA_tki_cut.cxx 
-                src/plottools.cxx 
+set(COMMON_TOOL src/dochi2.cxx
+                src/expdata.cxx
+                src/MINERvA_tki_cut.cxx
+                src/plottools.cxx
                 src/T2K_tki_cut.cxx
                 src/tkievent.cxx
                 src/tkigeneral.cxx)
@@ -54,7 +54,7 @@ if(NUWRO_DIR)
 endif()
 target_link_libraries(analysis PRIVATE ROOT::Physics ROOT::ROOTDataFrame)
 
-target_compile_definitions(analysis PRIVATE 
+target_compile_definitions(analysis PRIVATE
   PIZERO_DATA="${CMAKE_CURRENT_SOURCE_DIR}/data/PIZEROTKI_MINERvA.root"
   ZEROPI_DATA="${CMAKE_CURRENT_SOURCE_DIR}/data/PhysRevD.101.092001.root"
   T2K_STK_DATA="${CMAKE_CURRENT_SOURCE_DIR}/data/datResults.root"
@@ -63,7 +63,7 @@ target_compile_definitions(analysis PRIVATE
 root_generate_dictionary(G__Dict ${Dict_HEADERS} MODULE analysis LINKDEF LinkDef.h)
 
 
-set(GENERAL_LIBS ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree  ROOT::Hist ROOT::Gpad 
+set(GENERAL_LIBS ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree  ROOT::Hist ROOT::Gpad
     boost_program_options
 )
 
@@ -71,7 +71,7 @@ if(NUWRO_DIR)
 add_executable(T2K T2K.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(T2K PRIVATE 
+target_link_libraries(T2K PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -80,7 +80,7 @@ target_link_libraries(T2K PRIVATE
 add_executable(MINERvA_pi0 MINERvA_pi0.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(MINERvA_pi0 PRIVATE 
+target_link_libraries(MINERvA_pi0 PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -89,7 +89,7 @@ target_link_libraries(MINERvA_pi0 PRIVATE
 add_executable(MINERvA_0pi MINERvA_0pi.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(MINERvA_0pi PRIVATE 
+target_link_libraries(MINERvA_0pi PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -99,7 +99,7 @@ target_link_libraries(MINERvA_0pi PRIVATE
 add_executable(rawtheta rawtheta.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(rawtheta PRIVATE 
+target_link_libraries(rawtheta PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -108,7 +108,7 @@ target_link_libraries(rawtheta PRIVATE
 add_executable(MINERvA_all MINERvA_all.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(MINERvA_all PRIVATE 
+target_link_libraries(MINERvA_all PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -117,7 +117,7 @@ target_link_libraries(MINERvA_all PRIVATE
 add_executable(MINERvA_all_gibuu MINERvA_all_gibuu.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(MINERvA_all_gibuu PRIVATE 
+target_link_libraries(MINERvA_all_gibuu PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -126,7 +126,7 @@ target_link_libraries(MINERvA_all_gibuu PRIVATE
 add_executable(rawq2 rawq2.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(rawq2 PRIVATE 
+target_link_libraries(rawq2 PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -135,7 +135,7 @@ target_link_libraries(rawq2 PRIVATE
 add_executable(rawq2_gibuu rawq2_gibuu.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(rawq2_gibuu PRIVATE 
+target_link_libraries(rawq2_gibuu PRIVATE
   ${GENERAL_LIBS}
   EVENT1
   analysis
@@ -147,7 +147,7 @@ endif()
 add_executable(gibuu2root gibuu2root.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(gibuu2root PRIVATE 
+target_link_libraries(gibuu2root PRIVATE
   ${GENERAL_LIBS}
 )
 
@@ -156,7 +156,7 @@ target_link_libraries(gibuu2root PRIVATE
 add_executable(minerva_all_gibuu_plot minerva_all_gibuu_plot.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(minerva_all_gibuu_plot PRIVATE 
+target_link_libraries(minerva_all_gibuu_plot PRIVATE
   ${GENERAL_LIBS}
   analysis
 )
@@ -165,7 +165,7 @@ target_link_libraries(minerva_all_gibuu_plot PRIVATE
 add_executable(t2k_stk_gibuu t2k_stk_gibuu.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(t2k_stk_gibuu PRIVATE 
+target_link_libraries(t2k_stk_gibuu PRIVATE
   ${GENERAL_LIBS}
   analysis
 )
@@ -174,7 +174,7 @@ target_link_libraries(t2k_stk_gibuu PRIVATE
 #add_executable(GiBUU2pi GiBUU2pi.cpp)
 
 # Link all the object files to the main executable
-#target_link_libraries(GiBUU2pi PRIVATE 
+#target_link_libraries(GiBUU2pi PRIVATE
 #  ${GENERAL_LIBS}
 #  analysis
 #)
@@ -183,7 +183,7 @@ target_link_libraries(t2k_stk_gibuu PRIVATE
 add_executable(microboone_pi0_gibuu microboone_pi0_gibuu.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(microboone_pi0_gibuu PRIVATE 
+target_link_libraries(microboone_pi0_gibuu PRIVATE
   ${GENERAL_LIBS}
   analysis
 )
@@ -191,15 +191,28 @@ target_link_libraries(microboone_pi0_gibuu PRIVATE
 add_executable(build_jobcard build_jobcard.cpp)
 
 # Link all the object files to the main executable
-target_link_libraries(build_jobcard PRIVATE 
+target_link_libraries(build_jobcard PRIVATE
 boost_program_options
 )
 target_compile_definitions(
-  build_jobcard PRIVATE 
+  build_jobcard PRIVATE
   BASEPATH="${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 target_compile_definitions(
-  gibuu2root PRIVATE 
+  gibuu2root PRIVATE
+  BASEPATH="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+add_executable(ubsec ubsec.cxx)
+
+# Link all the object files to the main executable
+target_link_libraries(ubsec PRIVATE
+  ${GENERAL_LIBS}
+  analysis
+)
+
+target_compile_definitions(
+  ubsec PRIVATE
   BASEPATH="${CMAKE_CURRENT_SOURCE_DIR}"
 )
