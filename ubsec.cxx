@@ -11,8 +11,6 @@
 
 constexpr auto e_bins = std::to_array(
     {0.2, 0.54, 0.705, 0.805, 0.92, 1.05, 1.2, 1.375, 1.57, 2.05, 4.0});
-constexpr auto E_center = std::to_array(
-    {0.3818, 0.622, 0.7546, 0.8615, 0.9833, 1.122, 1.282, 1.463, 1.735, 2.619});
 
 std::generator<std::pair<double, double>> iter_flux_file(std::string file) {
   std::ifstream infile(file);
@@ -51,6 +49,7 @@ auto get_flux_spline() {
 }
 
 int main(int argc, char **argv) {
+  ROOT::EnableImplicitMT();
   if (argc == 1) {
     std::cerr << "Usage: " << argv[0] << " <input_files...>\n";
     return 1;
@@ -62,7 +61,6 @@ int main(int argc, char **argv) {
   auto hist = df.Histo1D({"enu_hist", "Neutrino Energy Distribution",
                           e_bins.size() - 1, e_bins.data()},
                          "enu", "weight");
-  // auto total_weight = df.Sum("weight");
   hist->Scale(1. / n_files / 10.);
 
   auto flux_spline = get_flux_spline();
@@ -84,9 +82,5 @@ int main(int argc, char **argv) {
   }
 
   hist->Divide(&flux_hist_binned);
-  for (int i = 0; i < hist->GetNbinsX(); ++i) {
-    double bin_content = hist->GetBinContent(i + 1);
-    hist->SetBinContent(i + 1, bin_content / E_center[i]);
-  }
   hist->SaveAs("enu_flux_hist.root");
 }
