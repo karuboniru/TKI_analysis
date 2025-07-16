@@ -37,11 +37,12 @@
 // this is general channel definition
 const std::vector<std::tuple<std::string, std::function<bool(int)>>>
     list_channel_channeldef{
-        {"2#pi BG", [](int id) { return id == 37; }},
-        {"2p2h", [](int id) { return id == 35; }},
-        {"QE", [](int id) { return id == 1; }},
-        {"RES", [](int id) { return id >= 2 && id <= 33; }},
-        {"DIS", [](int id) { return id == 34; }},
+      {"QE", [](int id) { return id == 1; }},
+      {"2p2h", [](int id) { return id == 35; }},
+      {"RES", [](int id) { return id >= 2 && id <= 31; }},
+      {"DIS", [](int id) { return id == 34; }},
+      {"1#pi BG", [](int id) { return id == 32 || id == 33; }},
+      {"2#pi BG", [](int id) { return id == 37; }},
     };
 
 // pion count definition for pi0 channel
