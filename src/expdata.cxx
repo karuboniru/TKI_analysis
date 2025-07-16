@@ -44,7 +44,7 @@ TH1D get_hist_impl() {
   auto hist_from_root =
       (TH1D *)((pizero_file.Get<TList>("neutronmomentum"))->At(0));
 
-  TH1D data("data_IApN_pi0", "MINERvA#pi^{0} Data", dimension,
+  TH1D data("data_IApN_pi0", "MINERvA #pi^{0} Data", dimension,
             bin_edges.data());
 
   auto cov = get_cov();
@@ -95,7 +95,7 @@ std::array<double, dimension + 1> get_binning() {
 TH1D get_hist_impl() {
   auto bin_edges = get_binning();
   auto hist_from_root = (TH1D *)((pizero_file.Get<TList>("dalphat"))->At(0));
-  TH1D data("data_dalphat_pi0", "MINERvA#pi^{0} Data", dimension,
+  TH1D data("data_dalphat_pi0", "MINERvA #pi^{0} Data", dimension,
             bin_edges.data());
 
   auto cov = get_cov();
