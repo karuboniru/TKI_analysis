@@ -272,8 +272,11 @@ int main(int argc, char *argv[]) {
       //                (
       // "run-tag", po::value<std::string>()->default_value(""),
       // "Run tag")
-      ("add-text", po::value<std::string>()->default_value(""),
-       "Additional text")("help", "produce help message");
+      ("text-0pi", po::value<std::string>()->default_value(""),
+       "Additional text") //
+      ("text-pi0", po::value<std::string>()->default_value(""),
+       "Additional text") //
+      ("help", "produce help message");
   po::positional_options_description p;
   p.add("input-files", -1);
   po::variables_map vm;
@@ -289,7 +292,9 @@ int main(int argc, char *argv[]) {
 
   auto &&files = vm["input-files"].as<std::vector<std::string>>();
   auto n_runs = files.size();
-  auto additional_text = vm["add-text"].as<std::string>();
+  // auto additional_text = vm["add-text"].as<std::string>();
+  auto text_0pi = vm["text-0pi"].as<std::string>();
+  auto text_pi0 = vm["text-pi0"].as<std::string>();
   auto tag_tki_base = vm["add-label-tki"].as<char>();
   auto tag_var_base = vm["add-label-var"].as<char>();
   std::cout << "Processing " << n_runs << " files" << std::endl;
@@ -609,7 +614,7 @@ int main(int argc, char *argv[]) {
     return ss.str();
   };
 
-  auto build_add_text = [&](char tag) {
+  auto build_add_text = [&](char tag, std::string additional_text) {
     std::unique_ptr<TLatex> latex;
     if (!additional_text.empty()) {
       if (tag)
@@ -624,56 +629,63 @@ int main(int argc, char *argv[]) {
 
   // first entry always data, then anything else
   do_plot({&exp_data_hist_IApN_pi0, &plots_pi0_IApN_stack,
-           &plots_pi0_dalphat_leg, build_add_text(tag_tki_base + 2).get()},
+           &plots_pi0_dalphat_leg,
+           build_add_text(tag_tki_base + 2, text_pi0).get()},
           "IApN_pi0", get_info("IApN").ytitle, get_info("IApN").name,
           {0.65, 0.45, 0.95, 0.93}, 0.8,
           form_legend(&exp_data_hist_IApN_pi0, chi2_IApN_pi0), "HISTC", 0,
           {.top = 0.02, .bottom = 0.125});
 
   do_plot({&shape_only_data_IApN_pi0, &stack_shape_IApN_pi0,
-           &plots_pi0_IApN_leg, build_add_text(tag_tki_base + 2).get()},
+           &plots_pi0_IApN_leg,
+           build_add_text(tag_tki_base + 2, text_pi0).get()},
           "IApN_pi0_shape", "shape", get_info("IApN").name,
           {0.65, 0.45, 0.95, 0.93}, 0.8,
           form_legend(&exp_data_hist_IApN_pi0, shape_only_chi2_IApN_pi0),
           "HISTC", 0, {.top = 0.02, .bottom = 0.125});
 
   do_plot({&exp_data_hist_IApN_0pi, &plots_0pi_IApN_stack, &plots_0pi_IApN_leg,
-           build_add_text(tag_tki_base + 2).get()},
+           build_add_text(tag_tki_base + 2, text_0pi).get()},
           "IApN_0pi", get_info("IApN").ytitle, get_info("IApN").name,
           {0.65, 0.55, 0.95, 0.93}, 0.8,
           form_legend(&exp_data_hist_IApN_0pi, chi2_IApN_0pi), "HISTC", 0,
           {.top = 0.02, .bottom = 0.125});
 
   do_plot({&shape_only_data_IApN_0pi, &stack_shape_IApN_0pi,
-           &plots_0pi_IApN_leg, build_add_text(tag_tki_base + 2).get()},
+           &plots_0pi_IApN_leg,
+           build_add_text(tag_tki_base + 2, text_pi0).get()},
           "IApN_0pi_shape", "shape", get_info("IApN").name,
           {0.65, 0.55, 0.95, 0.93}, 0.8,
           form_legend(&exp_data_hist_IApN_pi0, shape_only_chi2_IApN_pi0),
           "HISTC", 0, {.top = 0.02, .bottom = 0.125});
 
   do_plot({&exp_data_hist_dalphat_pi0, &plots_pi0_dalphat_stack,
-           &plots_pi0_dalphat_leg, build_add_text(tag_tki_base).get()},
+           &plots_pi0_dalphat_leg,
+           build_add_text(tag_tki_base, text_pi0).get()},
           "dalphat_pi0", get_info("dalphat").ytitle, get_info("dalphat").name,
           {0.2, 0.45, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_pi0, chi2_dalphat_pi0), "HISTC", 0,
           {.top = 0.06, .bottom = 0.11});
 
   do_plot({&shape_only_data_dalphat_pi0, &stack_shape_dalphat_pi0,
-           &plots_pi0_dalphat_leg, build_add_text(tag_tki_base).get()},
+           &plots_pi0_dalphat_leg,
+           build_add_text(tag_tki_base, text_pi0).get()},
           "dalphat_pi0_shape", "shape", get_info("dalphat").name,
           {0.2, 0.45, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_pi0, shape_only_chi2_dalphat_pi0),
           "HISTC", 0, {.top = 0.06, .bottom = 0.11});
 
   do_plot({&exp_data_hist_dalphat_0pi, &plots_0pi_dalphat_stack,
-           &plots_0pi_dalphat_leg, build_add_text(tag_tki_base).get()},
+           &plots_0pi_dalphat_leg,
+           build_add_text(tag_tki_base, text_0pi).get()},
           "dalphat_0pi", get_info("dalphat").ytitle, get_info("dalphat").name,
           {0.2, 0.6, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_0pi, chi2_dalphat_0pi), "HISTC", 0,
           {.top = 0.06, .bottom = 0.11});
 
   do_plot({&shape_only_data_dalphat_0pi, &stack_shape_dalphat_0pi,
-           &plots_0pi_dalphat_leg, build_add_text(tag_tki_base).get()},
+           &plots_0pi_dalphat_leg,
+           build_add_text(tag_tki_base, text_0pi).get()},
           "dalphat_0pi_shape", "shape", get_info("dalphat").name,
           {0.2, 0.5, 0.5, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_0pi, shape_only_chi2_dalphat_0pi),
@@ -683,18 +695,20 @@ int main(int argc, char *argv[]) {
     auto &&[stack, leg] = list;
     auto plot_ent = get_info(name);
     auto xmax = plot_ent.xmax_0pi == 0. ? plot_ent.xmax : plot_ent.xmax_0pi;
-    do_plot({&stack, &leg, build_add_text(tag_var_base).get()}, name + "_0pi",
-            plot_ent.ytitle, plot_ent.name, {0.65, 0.45, 0.95, 0.93}, xmax,
-            "MINERvA 0#pi", "HIST", plot_ent.ymax_0pi,
+    do_plot({&stack, &leg, build_add_text(tag_var_base, text_0pi).get()},
+            name + "_0pi", plot_ent.ytitle, plot_ent.name,
+            {0.65, 0.45, 0.95, 0.93}, xmax, "MINERvA 0#pi", "HIST",
+            plot_ent.ymax_0pi,
             {.top = plot_ent.ymax_0pi < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }
   for (auto &&[name, list] : std::views::zip(vars_pi0, stacked_vars_pi0)) {
     auto &&[stack, leg] = list;
     auto plot_ent = get_info(name);
     auto xmax = plot_ent.xmax_pi0 == 0. ? plot_ent.xmax : plot_ent.xmax_pi0;
-    do_plot({&stack, &leg, build_add_text(tag_var_base).get()}, name + "_pi0",
-            plot_ent.ytitle, plot_ent.name, {0.65, 0.45, 0.95, 0.93}, xmax,
-            "MINERvA#pi^{0}", "HIST", plot_ent.ymax_pi0,
+    do_plot({&stack, &leg, build_add_text(tag_var_base, text_pi0).get()},
+            name + "_pi0", plot_ent.ytitle, plot_ent.name,
+            {0.65, 0.45, 0.95, 0.93}, xmax, "MINERvA#pi^{0}", "HIST",
+            plot_ent.ymax_pi0,
             {.top = plot_ent.ymax_pi0 < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }
   /////////////////////
@@ -706,8 +720,9 @@ int main(int argc, char *argv[]) {
       }) |
       std::ranges::to<std::vector>();
   plots_pi0_IApN_list_raw.emplace_back(&plots_pi0_dalphat_leg);
-  auto tex = build_add_text(tag_tki_base);
-  plots_pi0_IApN_list_raw.emplace_back(tex.get());
+  auto tex_pi0 = build_add_text(tag_tki_base, text_pi0);
+  auto tex_0pi = build_add_text(tag_tki_base, text_0pi);
+  plots_pi0_IApN_list_raw.emplace_back(tex_pi0.get());
   do_plot(plots_pi0_IApN_list_raw, "IApN_pi0_nostack", get_info("IApN").ytitle,
           get_info("IApN").name, {0.65, 0.45, 0.95, 0.93}, 0.8,
           form_legend(&exp_data_hist_IApN_pi0, chi2_IApN_pi0), "HISTC", 0.2,
@@ -721,7 +736,7 @@ int main(int argc, char *argv[]) {
       }) |
       std::ranges::to<std::vector>();
   plots_0pi_IApN_list_raw.emplace_back(&plots_0pi_IApN_leg);
-  plots_0pi_IApN_list_raw.emplace_back(tex.get());
+  plots_0pi_IApN_list_raw.emplace_back(tex_0pi.get());
   do_plot(plots_0pi_IApN_list_raw, "IApN_0pi_nostack", get_info("IApN").ytitle,
           get_info("IApN").name, {0.65, 0.55, 0.95, 0.93}, 0.8,
           form_legend(&exp_data_hist_IApN_0pi, chi2_IApN_0pi), "HISTC", 0.4,
