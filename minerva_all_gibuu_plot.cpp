@@ -707,7 +707,7 @@ int main(int argc, char *argv[]) {
     auto xmax = plot_ent.xmax_pi0 == 0. ? plot_ent.xmax : plot_ent.xmax_pi0;
     do_plot({&stack, &leg, build_add_text(tag_var_base, text_pi0).get()},
             name + "_pi0", plot_ent.ytitle, plot_ent.name,
-            {0.65, 0.45, 0.95, 0.93}, xmax, "MINERvA#pi^{0}", "HIST",
+            {0.65, 0.45, 0.95, 0.93}, xmax, "MINERvA#kern[0.1]{#pi^{0}}", "HIST",
             plot_ent.ymax_pi0,
             {.top = plot_ent.ymax_pi0 < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }

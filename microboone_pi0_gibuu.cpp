@@ -420,7 +420,7 @@ int main(int argc, char **argv) {
     auto &&[stack, legend] = tup;
     auto plotobj = get_info(name);
     do_plot({&stack, &legend, latex.get()}, name, plotobj.ytitle, plotobj.name,
-            {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE #pi^{0}", "HIST",
+            {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE#kern[0.1]{#pi^{0}}", "HIST",
             plotobj.ymax_0pi, {.top = 0.04, .bottom = 0.12});
   }
   file->Write();
