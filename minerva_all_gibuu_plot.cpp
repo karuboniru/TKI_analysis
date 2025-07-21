@@ -607,6 +607,10 @@ int main(int argc, char *argv[]) {
   json_out["shape_only_chi2_IApN_0pi"] = shape_only_chi2_IApN_0pi;
   json_out["shape_only_chi2_dalphat_pi0"] = shape_only_chi2_dalphat_pi0;
   json_out["shape_only_chi2_dalphat_0pi"] = shape_only_chi2_dalphat_0pi;
+  json_out["xsecint_0pi"] = xsecint_0pi;
+  json_out["xsecint_pi0"] = xsecint_pi0;
+  json_out["xsecint_pn_0pi"] = pred_all_IApN_pi0->Integral("WIDTH");
+  json_out["xsecint_dat_0pi"] = pred_all_dalphat_0pi->Integral("WIDTH");
   std::fstream json_file("chi2.json", std::ios::out);
   json_file << json_out.dump(2) << std::endl;
 

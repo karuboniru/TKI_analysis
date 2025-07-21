@@ -377,6 +377,9 @@ int main(int argc, char **argv) {
   nlohmann::json json_out;
   json_out["chi2_momentum"] = pi0_momentum_chi2;
   json_out["chi2_angular"] = pi0_angular_chi2;
+  json_out["xsec_angular_int"] = pi0_angular_hist_smeared.Integral("WIDTH");
+  json_out["xsec_momentum_int"] = pi0_momentum_hist_smeared.Integral("WIDTH");
+
   std::fstream out("chi2.json", std::ios::out);
   out << json_out.dump(2);
   std::println("Chi2 Results: \n"
