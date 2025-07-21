@@ -216,3 +216,11 @@ target_compile_definitions(
   ubsec PRIVATE
   BASEPATH="${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+add_executable(microboone_TKI microboone_TKI.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(microboone_TKI PRIVATE
+  ${GENERAL_LIBS}
+  analysis
+)

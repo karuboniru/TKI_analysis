@@ -10,13 +10,16 @@ public:
   template <typename T>
   equal_range_iterable(T &&m, int id) : range(m.equal_range(id)) {}
 
-  auto &&begin() { return range.first; }
+  [[nodiscard]] auto &&begin() { return range.first; }
 
-  auto &&end() { return range.second; }
+  [[nodiscard]] auto &&end() { return range.second; }
+
+  [[nodiscard]] auto size() const {
+    return std::distance(range.first, range.second);
+  }
 
 private:
   decltype(std::declval<U>().equal_range(std::declval<int>())) range;
-  int id;
 };
 
 template <typename U>
@@ -38,7 +41,7 @@ public:
 
   const std::set<int> &get_ids_post() const;
 
-  const TLorentzVector & get_leading(int id) const;
+  const TLorentzVector &get_leading(int id) const;
 
 private:
   std::unordered_multimap<int, TLorentzVector> in, out, post;
