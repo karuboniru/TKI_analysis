@@ -77,70 +77,71 @@ int main(int argc, char **argv) {
   auto d = TrackerPrepare(input);
   ROOT::RDF::Experimental::AddProgressBar(d);
 
-  auto signal = d;
-  d.Filter(
-       [](const NeutrinoEvent &event) {
-         // all final state particles are muon, pion, proton, neutron
-         // existance of any other particle leads to rejection
-         if (std::ranges::any_of(event.get_ids_post(), [](int pdg) {
-               switch (pdg) {
-               case 13:   // muon
-               case 2212: // proton
-               case 2112: // neutron
-               case 211:  // pion+
-               case -211: // pion-
-                 return false;
-               default:
-                 return true; // other particles are not allowed
-               }
-             })) {
-           return false; // reject events with other particles
-         }
+  auto signal =
+      d.Filter(
+           [](const NeutrinoEvent &event) {
+             // all final state particles are muon, pion, proton, neutron
+             // existance of any other particle leads to rejection
+             if (std::ranges::any_of(event.get_ids_post(), [](int pdg) {
+                   switch (pdg) {
+                   case 13:   // muon
+                   case 2212: // proton
+                   case 2112: // neutron
+                   case 211:  // pion+
+                   case -211: // pion-
+                     return false;
+                   default:
+                     return true; // other particles are not allowed
+                   }
+                 })) {
+               return false; // reject events with other particles
+             }
 
-         // a final state muon at 0.1 - 1.2 GeV/c
-         if (event.count_post(13) != 1) {
-           return false; // reject events with no muon or more than one muon
-         }
+             // a final state muon at 0.1 - 1.2 GeV/c
+             if (event.count_post(13) != 1) {
+               return false; // reject events with no muon or more than one muon
+             }
 
-         auto muon = event.post_range(13).begin()->second;
-         if (muon.P() < 0.1 || muon.P() > 1.2) {
-           return false; // reject events with muon outside of the range
-         }
+             auto muon = event.post_range(13).begin()->second;
+             if (muon.P() < 0.1 || muon.P() > 1.2) {
+               return false; // reject events with muon outside of the range
+             }
 
-         auto n_proton_in_range =
-             std::ranges::distance(event.post_range(2212) | std::views::values |
-                                   std::views::filter([](auto &&vec) {
-                                     return vec.P() > 0.3 && vec.P() < 1.;
-                                   }));
-         if (n_proton_in_range != 1)
-           return false; // require exactly one proton in the range
+             auto n_proton_in_range = std::ranges::distance(
+                 event.post_range(2212) | std::views::values |
+                 std::views::filter(
+                     [](auto &&vec) { return vec.P() > 0.3 && vec.P() < 1.; }));
+             if (n_proton_in_range != 1)
+               return false; // require exactly one proton in the range
 
-         auto selection_above_70_MeV =
-             std::views::values |
-             std::views::filter([](auto &&vec) { return vec.P() > 0.07; });
-         auto n_charged_pion_above_70 =
-             // this is when I want the concat view...
-             std::ranges::distance(event.post_range(211) |
-                                   selection_above_70_MeV) +
-             std::ranges::distance(event.post_range(-211) |
-                                   selection_above_70_MeV);
+             auto selection_above_70_MeV =
+                 std::views::values |
+                 std::views::filter([](auto &&vec) { return vec.P() > 0.07; });
+             auto n_charged_pion_above_70 =
+                 // this is when I want the concat view...
+                 std::ranges::distance(event.post_range(211) |
+                                       selection_above_70_MeV) +
+                 std::ranges::distance(event.post_range(-211) |
+                                       selection_above_70_MeV);
 
-         return n_charged_pion_above_70 ==
-                0; // require no charged pions above 70 MeV/c, final cut.
-       },
-       {"EventRecord"}, "Particle Type Cut")
-      .Define("proton",
-              [](const NeutrinoEvent &event) {
-                return *(event.post_range(2212) | std::views::values |
-                         std::views::filter([](auto &&vec) {
-                           return vec.P() > 0.3 && vec.P() < 1.;
-                         })).begin();
-              },
-              {"EventRecord"})
-      .Define("muon",
+             return n_charged_pion_above_70 ==
+                    0; // require no charged pions above 70 MeV/c, final cut.
+           },
+           {"EventRecord"}, "Particle Type Cut")
+          .Define("proton",
+                  [](const NeutrinoEvent &event) {
+                    return *(event.post_range(2212) | std::views::values |
+                             std::views::filter([](auto &&vec) {
+                               return vec.P() > 0.3 && vec.P() < 1.;
+                             })).begin();
+                  },
+                  {"EventRecord"})
+          .Define(
+              "muon",
               [](const NeutrinoEvent &event) { return event.get_leading(13); },
               {"EventRecord"})
-      .Define("TKI",
+          .Define(
+              "TKI",
               [](const TLorentzVector &neutrino_p, const TLorentzVector &muon_p,
                  const TLorentzVector &full_hadron) {
                 auto ret =
@@ -151,15 +152,15 @@ int main(int argc, char **argv) {
                 return ret;
               },
               {"InitNeutrino", "muon", "proton"})
-      .Define("dalphat", [](const TKIVars &tki) { return tki.dalphat; },
-              {"TKI"});
+          .Define("dalphat", [](const TKIVars &tki) { return tki.dalphat; },
+                  {"TKI"});
   auto cutreport = signal.Report();
 
   auto dalphat =
       signal.Histo1D({"dalphat", "dalpha_{t};dalpha_{t} [deg];Events",
                       bin_edges.size() - 1, bin_edges.data()},
                      "dalphat", "weight");
-  dalphat->Scale(1. / n_runs / 10, "width");
+  dalphat->Scale(1. / n_runs / 10 * 40, "width");
 
   double chi2{};
   for (size_t i = 0; i < bin_edges.size() - 1; ++i) {
