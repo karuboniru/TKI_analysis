@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
 
   legend_conf conf{
       .force_include = {"QE", "RES", "DIS", "BG"},
-      // .force_exclude = {"2p2h"},
+      .force_exclude = {"2p2h"},
   };
 
   auto vars_stack =
@@ -401,7 +401,7 @@ int main(int argc, char **argv) {
           "mom",
           "d#sigma/d#it{p}_{#pi^{0}} (#times 10^{#minus 38} "
           "cm^{2}/GeV/#it{c}/nucleon)",
-          "#it{p}_{#pi^{0}} (GeV/#it{c})", {.65, .45, .95, .93}, 0.,
+          "#it{p}_{#pi^{0}} (GeV/#it{c})", {.60, .45, .95, .93}, 0.,
           form_legend(&hist_momentum, pi0_momentum_chi2), "HIST", 0,
           {.top = 0.04, .bottom = 0.12});
 
@@ -420,7 +420,7 @@ int main(int argc, char **argv) {
     auto &&[stack, legend] = tup;
     auto plotobj = get_info(name);
     do_plot({&stack, &legend, latex.get()}, name, plotobj.ytitle, plotobj.name,
-            {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE#kern[0.25]{#pi^{0}}", "HIST",
+            {.7, .55, .9, .93}, plotobj.xmax, "MicroBooNE CC#pi^{0}", "HIST",
             plotobj.ymax_0pi, {.top = 0.04, .bottom = 0.12});
   }
   file->Write();

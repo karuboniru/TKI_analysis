@@ -208,6 +208,7 @@ auto plot_channels_pi0(T &&df_in, std::string variable,
 }
 
 int main(int argc, char *argv[]) {
+  IniColorCBminerva2pibg();
   namespace po = boost::program_options;
   po::options_description desc("Options");
   desc.add_options() //

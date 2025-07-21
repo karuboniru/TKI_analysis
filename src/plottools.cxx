@@ -373,7 +373,7 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
               arg->SetX(legend_pos[2] - 0.05);
               arg->SetY(legend_pos[3] - 0.05);
             } else {
-              arg->SetX(legend_pos[0] - 0.5);
+              arg->SetX(0.15);
               arg->SetY(legend_pos[3] - 0.05);
             }
             // arg->Draw();

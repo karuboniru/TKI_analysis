@@ -487,30 +487,39 @@ int main(int argc, char *argv[]) {
   constexpr double threshold_frac_0pi = .5e-2;
   constexpr double threshold_frac_pi0 = .5e-2;
 
+  legend_conf conf_0pi{
+      // .force_include = {"QE", "RES", "DIS"}
+  };
+
+  legend_conf conf_pi0{
+      .force_include = {"QE", "RES", "DIS"},
+      .force_exclude = {"2p2h"},
+  };
+
   auto xsecint_0pi = pred_all_dalphat_0pi->Integral("WIDTH");
   auto xsecint_pi0 = pred_all_dalphat_pi0->Integral("WIDTH");
   auto [plots_0pi_IApN_stack, plots_0pi_IApN_leg] = build_stack_from_list(
       plots_0pi_IApN,
-      pred_all_IApN_0pi->Integral("WIDTH") * threshold_frac_0pi);
+      pred_all_IApN_0pi->Integral("WIDTH") * threshold_frac_0pi, conf_0pi);
   auto [plots_0pi_dalphat_stack, plots_0pi_dalphat_leg] = build_stack_from_list(
       plots_0pi_dalphat,
-      pred_all_dalphat_0pi->Integral("WIDTH") * threshold_frac_0pi);
+      pred_all_dalphat_0pi->Integral("WIDTH") * threshold_frac_0pi, conf_0pi);
 
   auto [plots_pi0_IApN_stack, plots_pi0_IApN_leg] = build_stack_from_list(
       plots_pi0_IApN,
-      pred_all_IApN_pi0->Integral("WIDTH") * threshold_frac_pi0);
+      pred_all_IApN_pi0->Integral("WIDTH") * threshold_frac_pi0, conf_pi0);
   auto [plots_pi0_dalphat_stack, plots_pi0_dalphat_leg] = build_stack_from_list(
       plots_pi0_dalphat,
-      pred_all_dalphat_pi0->Integral("WIDTH") * threshold_frac_pi0);
+      pred_all_dalphat_pi0->Integral("WIDTH") * threshold_frac_pi0, conf_pi0);
 
   auto stacked_vars_0pi =
       var_plots_0pi | std::views::transform([&](auto &&list) {
-        return build_stack_from_list(list, xsecint_0pi * threshold_frac_0pi);
+        return build_stack_from_list(list, xsecint_0pi * threshold_frac_0pi, conf_0pi);
       }) |
       std::ranges::to<std::vector>();
   auto stacked_vars_pi0 =
       var_plots_pi0 | std::views::transform([&](auto &&list) {
-        return build_stack_from_list(list, xsecint_pi0 * threshold_frac_pi0);
+        return build_stack_from_list(list, xsecint_pi0 * threshold_frac_pi0, conf_pi0);
       }) |
       std::ranges::to<std::vector>();
 

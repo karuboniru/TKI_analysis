@@ -292,7 +292,7 @@ std::array<double, 9> get_binning() {
 
 TH1D get_hist_impl() {
   auto bin_edges = get_binning();
-  TH1D data("data_pion_momentum", "MicroBooNE#kern[0.25]{#pi^{0}} Data", dimension,
+  TH1D data("data_pion_momentum", "MicroBooNE CC#pi^{0} Data", dimension,
             bin_edges.data());
   std::array<double, 8> exp_value{0.66, 1.92, 2.44, 1.15,
                                   0.73, 0.34, 0.18, 0.09};
@@ -371,7 +371,7 @@ std::array<double, dimension + 1> get_binning() {
 
 TH1D get_hist_impl() {
   auto bin_edges = get_binning();
-  TH1D data("data_pion_angular", "MicroBooNE#kern[0.25]{#pi^{0}} Data", dimension,
+  TH1D data("data_pion_angular", "MicroBooNE CC#pi^{0} Data", dimension,
             bin_edges.data());
   std::array<double, 7> exp_value{.1, .17, .20, .19, .23, .40, .49};
   auto &cov = get_cov();
