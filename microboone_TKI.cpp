@@ -45,6 +45,16 @@ const auto uncertainties =
     std::to_array({0.0069867236, 0.0058600051, 0.0056673462, 0.0070400151,
                    0.008404137, 0.0087227652, 0.01011356});
 
+TH1D make_exp_hist() {
+  TH1D exp_hist("expbin", "Experimental Data;dalpha_{t} [deg];Events",
+                bin_edges.size() - 1, bin_edges.data());
+  for (size_t i = 0; i < cross_sections.size(); ++i) {
+    exp_hist.SetBinContent(i + 1, cross_sections[i]);
+    exp_hist.SetBinError(i + 1, uncertainties[i]);
+  }
+  return exp_hist;
+}
+
 int main(int argc, char **argv) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
@@ -173,6 +183,9 @@ int main(int argc, char **argv) {
   std::println("Chi2: {:.3f}", chi2);
   auto file = std::make_unique<TFile>("tki.root", "RECREATE");
   file->Add(dalphat.GetPtr());
+  auto exp_hist = make_exp_hist();
+  exp_hist.SetName("exphist");
+  file->Add(&exp_hist);
   file->Write();
   file->Close();
 
