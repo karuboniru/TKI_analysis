@@ -45,17 +45,29 @@ const auto uncertainties =
     std::to_array({0.0069867236, 0.0058600051, 0.0056673462, 0.0070400151,
                    0.008404137, 0.0087227652, 0.01011356});
 
+const std::vector<std::tuple<std::string, std::function<bool(int)>>>
+    list_channel_channeldef{
+        {"QE", [](int id) { return id == 1; }},
+        {"2p2h", [](int id) { return id == 35; }},
+        {"RES", [](int id) { return id >= 2 && id <= 31; }},
+        {"DIS", [](int id) { return id == 34; }},
+        {"1#pi BG", [](int id) { return id == 32 || id == 33; }},
+        {"2#pi BG", [](int id) { return id == 37; }},
+    };
+
 TH1D make_exp_hist() {
   TH1D exp_hist("expbin", "Experimental Data;dalpha_{t} [deg];Events",
                 bin_edges.size() - 1, bin_edges.data());
   for (size_t i = 0; i < cross_sections.size(); ++i) {
-    exp_hist.SetBinContent(i + 1, cross_sections[i]);
-    exp_hist.SetBinError(i + 1, uncertainties[i]);
+    exp_hist.SetBinContent(i + 1, cross_sections[i] / 40.);
+    exp_hist.SetBinError(i + 1, uncertainties[i] / 40.);
   }
   return exp_hist;
 }
 
 int main(int argc, char **argv) {
+  IniColorCBminerva2pibg();
+
   namespace po = boost::program_options;
   po::options_description desc("Options");
   desc.add_options()("input-files", po::value<std::vector<std::string>>(),
@@ -90,7 +102,7 @@ int main(int argc, char **argv) {
   auto signal =
       d.Filter(
            [](const NeutrinoEvent &event) {
-             // all final state particles are muon, pion, proton, neutron
+             // all final state particles are muon, charged pion, proton, neutron
              // existance of any other particle leads to rejection
              if (std::ranges::any_of(event.get_ids_post(), [](int pdg) {
                    switch (pdg) {
@@ -170,7 +182,31 @@ int main(int argc, char **argv) {
       signal.Histo1D({"dalphat", "dalpha_{t};dalpha_{t} [deg];Events",
                       bin_edges.size() - 1, bin_edges.data()},
                      "dalphat", "weight");
-  dalphat->Scale(1. / n_runs / 10 * 40, "width");
+  auto per_channel_dalphat =
+      list_channel_channeldef | std::views::enumerate |
+      std::views::transform([&](const auto &id_channel) {
+        auto &&[id, channel] = id_channel;
+        auto &[name, channel_def] = channel;
+        return std::make_tuple(
+            name,
+            ROOT::RDF::RResultPtr<TH1>(
+                signal.Filter(channel_def, {"channel"})
+                    .Histo1D({("dalphat_" + name).c_str(),
+                              "dalpha_{t};dalpha_{t} [deg];Events",
+                              bin_edges.size() - 1, bin_edges.data()},
+                             "dalphat", "weight")),
+            id * 2);
+      }) |
+      std::ranges::to<std::vector>();
+
+  for (auto &plot : per_channel_dalphat | std::views::elements<1>) {
+    plot->Scale(1. / n_runs / 10, "width");
+  }
+  dalphat->Scale(1. / n_runs / 10, "width");
+
+  auto &&[stack, legend] = build_stack_from_list(
+      per_channel_dalphat, dalphat->Integral("width") * 0.015, {});
+  auto exp_hist = make_exp_hist();
 
   double chi2{};
   for (size_t i = 0; i < bin_edges.size() - 1; ++i) {
@@ -180,10 +216,16 @@ int main(int argc, char **argv) {
     chi2 += std::pow((pred - exp) / unc, 2);
   }
 
+  do_plot(
+      {&exp_hist, dalphat, &stack}, "dalphat",
+      "d#sigma/d#delta#it{#alpha}_{T} (10^{#minus 38} cm^{2}/degree/nucleon)",
+      "#delta#it{#alpha}_{T} (degree)", {0.15, 0.6, 0.5, 0.9}, 0.,
+      std::format("#{{chi}}^{{2}}/NDF = {:.0f}/7", chi2), "HISTC", 3e-3,
+      {.top = 0.06, .bottom = 0.12});
+
   std::println("Chi2: {:.3f}", chi2);
   auto file = std::make_unique<TFile>("tki.root", "RECREATE");
   file->Add(dalphat.GetPtr());
-  auto exp_hist = make_exp_hist();
   exp_hist.SetName("exphist");
   file->Add(&exp_hist);
   file->Write();
