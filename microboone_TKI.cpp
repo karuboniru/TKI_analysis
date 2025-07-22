@@ -102,8 +102,8 @@ int main(int argc, char **argv) {
   auto signal =
       d.Filter(
            [](const NeutrinoEvent &event) {
-             // all final state particles are muon, charged pion, proton, neutron
-             // existance of any other particle leads to rejection
+             // all final state particles are muon, charged pion, proton,
+             // neutron existance of any other particle leads to rejection
              if (std::ranges::any_of(event.get_ids_post(), [](int pdg) {
                    switch (pdg) {
                    case 13:   // muon
@@ -216,8 +216,14 @@ int main(int argc, char **argv) {
     chi2 += std::pow((pred - exp) / unc, 2);
   }
 
+  std::unique_ptr<TLatex> latex;
+  if (!additional_text.empty()) {
+    latex = std::make_unique<TLatex>(0.65, 0.5, additional_text.c_str());
+    latex->SetNDC();
+  }
+
   do_plot(
-      {&exp_hist, dalphat, &stack}, "dalphat",
+      {&exp_hist, dalphat, &stack, latex.get()}, "dalphat",
       "d#sigma/d#delta#it{#alpha}_{T} (10^{#minus 38} cm^{2}/degree/nucleon)",
       "#delta#it{#alpha}_{T} (degree)", {0.15, 0.6, 0.5, 0.9}, 0.,
       std::format("#{{chi}}^{{2}}/NDF = {:.0f}/7", chi2), "HISTC", 3e-3,
