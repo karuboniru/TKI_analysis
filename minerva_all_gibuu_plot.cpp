@@ -465,10 +465,26 @@ int main(int argc, char *argv[]) {
           .Histo2D({"deltam2_vs_pdotq", "deltam2_vs_pdotq;deltam2;pdotq", 60,
                     -0.5, 0.5, 60, 0, 5},
                    "deltam2", "pdotq", "weight");
+  auto df_high_dat = rdf_pi0_after_cut.Filter(
+      [](double dat) { return dat > 90; }, {"dalphat"});
+  auto hist_q0_q2 = df_high_dat.Histo2D(
+      {"Q2_vs_q0", "Q2_vs_q0;Q^{2};q_{0}", 50, 0, 5, 50, 0, 5}, "Q2", "q0",
+      "weight");
+  auto hist_W_high_dat = df_high_dat.Histo1D(
+      {"W_high_dat",
+       "W_high_dat;W (GeV);d#sigma/dW (10^{#minus 38} cm^{2}/GeV/nucleon)", 60,
+       0.7, 4.0},
+      "W", "weight");
 
   auto file = std::make_unique<TFile>("dtl_all.root", "RECREATE");
+  hist2d->Scale((12. / 13.) / n_runs / 10, "width");
   file->Add(hist2d.GetPtr());
+  hist2d_another->Scale((12. / 13.) / n_runs / 10, "width");
   file->Add(hist2d_another.GetPtr());
+  hist_q0_q2->Scale((12. / 13.) / n_runs / 10, "width");
+  file->Add(hist_q0_q2.GetPtr());
+  hist_W_high_dat->Scale((12. / 13.) / n_runs / 10, "width");
+  file->Add(hist_W_high_dat.GetPtr());
   for (auto &&plot : plots) {
     plot->Scale((12. / 13.) / n_runs / 10, "width");
     file->Add(plot.GetPtr());
@@ -499,27 +515,29 @@ int main(int argc, char *argv[]) {
   auto xsecint_0pi = pred_all_dalphat_0pi->Integral("WIDTH");
   auto xsecint_pi0 = pred_all_dalphat_pi0->Integral("WIDTH");
   auto [plots_0pi_IApN_stack, plots_0pi_IApN_leg] = build_stack_from_list(
-      plots_0pi_IApN,
-      pred_all_IApN_0pi->Integral("WIDTH") * threshold_frac_0pi, conf_0pi);
+      plots_0pi_IApN, pred_all_IApN_0pi->Integral("WIDTH") * threshold_frac_0pi,
+      conf_0pi);
   auto [plots_0pi_dalphat_stack, plots_0pi_dalphat_leg] = build_stack_from_list(
       plots_0pi_dalphat,
       pred_all_dalphat_0pi->Integral("WIDTH") * threshold_frac_0pi, conf_0pi);
 
   auto [plots_pi0_IApN_stack, plots_pi0_IApN_leg] = build_stack_from_list(
-      plots_pi0_IApN,
-      pred_all_IApN_pi0->Integral("WIDTH") * threshold_frac_pi0, conf_pi0);
+      plots_pi0_IApN, pred_all_IApN_pi0->Integral("WIDTH") * threshold_frac_pi0,
+      conf_pi0);
   auto [plots_pi0_dalphat_stack, plots_pi0_dalphat_leg] = build_stack_from_list(
       plots_pi0_dalphat,
       pred_all_dalphat_pi0->Integral("WIDTH") * threshold_frac_pi0, conf_pi0);
 
   auto stacked_vars_0pi =
       var_plots_0pi | std::views::transform([&](auto &&list) {
-        return build_stack_from_list(list, xsecint_0pi * threshold_frac_0pi, conf_0pi);
+        return build_stack_from_list(list, xsecint_0pi * threshold_frac_0pi,
+                                     conf_0pi);
       }) |
       std::ranges::to<std::vector>();
   auto stacked_vars_pi0 =
       var_plots_pi0 | std::views::transform([&](auto &&list) {
-        return build_stack_from_list(list, xsecint_pi0 * threshold_frac_pi0, conf_pi0);
+        return build_stack_from_list(list, xsecint_pi0 * threshold_frac_pi0,
+                                     conf_pi0);
       }) |
       std::ranges::to<std::vector>();
 
@@ -722,8 +740,8 @@ int main(int argc, char *argv[]) {
     auto xmax = plot_ent.xmax_pi0 == 0. ? plot_ent.xmax : plot_ent.xmax_pi0;
     do_plot({&stack, &leg, build_add_text(tag_var_base, text_pi0).get()},
             name + "_pi0", plot_ent.ytitle, plot_ent.name,
-            {0.65, 0.45, 0.95, 0.93}, xmax, "MINERvA#kern[0.25]{#pi^{0}}", "HIST",
-            plot_ent.ymax_pi0,
+            {0.65, 0.45, 0.95, 0.93}, xmax, "MINERvA#kern[0.25]{#pi^{0}}",
+            "HIST", plot_ent.ymax_pi0,
             {.top = plot_ent.ymax_pi0 < 0.1 ? 0.06 : 0.02, .bottom = 0.11});
   }
   /////////////////////

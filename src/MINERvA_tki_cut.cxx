@@ -132,6 +132,13 @@ ROOT::RDF::RNode vars_define(ROOT::RDF::RNode df) {
                 return -q0.Mag2();
               },
               {"InitNeutrino", "PrimaryLepton"})
+      .Define("q0",
+              [](const TLorentzVector &InitNeutrino,
+                 const TLorentzVector &PrimaryLepton) {
+                auto q0 = InitNeutrino.E() - PrimaryLepton.E();
+                return q0;
+              },
+              {"InitNeutrino", "PrimaryLepton"})
       .Define("W",
               [](const TLorentzVector &InitNeutrino,
                  const TLorentzVector &PrimaryLepton,
