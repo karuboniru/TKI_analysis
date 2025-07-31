@@ -56,7 +56,7 @@ const std::vector<std::tuple<std::string, std::function<bool(int)>>>
     };
 
 TH1D make_exp_hist() {
-  TH1D exp_hist("expbin", "Experimental Data;dalpha_{t} [deg];Events",
+  TH1D exp_hist("expbin", "MicroBooNE CC0#pi;dalpha_{t} [deg];Events",
                 bin_edges.size() - 1, bin_edges.data());
   for (size_t i = 0; i < cross_sections.size(); ++i) {
     exp_hist.SetBinContent(i + 1, cross_sections[i] / 40.);
@@ -211,8 +211,8 @@ int main(int argc, char **argv) {
   double chi2{};
   for (size_t i = 0; i < bin_edges.size() - 1; ++i) {
     auto pred = dalphat->GetBinContent(i + 1);
-    auto exp = cross_sections[i];
-    auto unc = uncertainties[i];
+    auto exp = cross_sections[i]/40.;
+    auto unc = uncertainties[i]/40.;
     chi2 += std::pow((pred - exp) / unc, 2);
   }
 
@@ -223,10 +223,10 @@ int main(int argc, char **argv) {
   }
 
   do_plot(
-      {&exp_hist, dalphat, &stack, latex.get()}, "dalphat",
+      {&exp_hist, dalphat, &stack, &legend, latex.get()}, "dalphat",
       "d#sigma/d#delta#it{#alpha}_{T} (10^{#minus 38} cm^{2}/degree/nucleon)",
       "#delta#it{#alpha}_{T} (degree)", {0.15, 0.6, 0.5, 0.9}, 0.,
-      std::format("#{{chi}}^{{2}}/NDF = {:.0f}/7", chi2), "HISTC", 3e-3,
+      std::format("#chi^{{2}}/NDF = {:.0f}/7", chi2), "HISTC", 3e-3,
       {.top = 0.06, .bottom = 0.12});
 
   std::println("Chi2: {:.3f}", chi2);

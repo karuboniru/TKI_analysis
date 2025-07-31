@@ -696,7 +696,7 @@ int main(int argc, char *argv[]) {
            &plots_pi0_dalphat_leg,
            build_add_text(tag_tki_base, text_pi0).get()},
           "dalphat_pi0", get_info("dalphat").ytitle, get_info("dalphat").name,
-          {0.2, 0.45, 0.5, 0.9}, 0.,
+          {0.15, 0.45, 0.4, 0.9}, 0.,
           form_legend(&exp_data_hist_dalphat_pi0, chi2_dalphat_pi0), "HISTC", 0,
           {.top = 0.06, .bottom = 0.11});
 
