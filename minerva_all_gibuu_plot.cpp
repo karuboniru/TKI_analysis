@@ -471,10 +471,10 @@ int main(int argc, char *argv[]) {
       {"Q2_vs_q0", "Q2_vs_q0;Q^{2};q_{0}", 50, 0, 5, 50, 0, 5}, "Q2", "q0",
       "weight");
   auto hist_q0_q2_high_dat = df_high_dat.Histo2D(
-      {"Q2_vs_q0", "Q2_vs_q0;Q^{2};q_{0}", 50, 0, 5, 50, 0, 5}, "Q2", "q0",
+      {"Q2_vs_q0_high_dat", "Q2_vs_q0;Q^{2};q_{0}", 50, 0, 5, 50, 0, 5}, "Q2", "q0",
       "weight");
   auto hist_W = rdf_pi0_after_cut.Histo1D(
-      {"W", "W;W (GeV);d#sigma/dW (10^{#minus 38} cm^{2}/GeV/nucleon)", 60, 0.7,
+      {"W_all", "W;W (GeV);d#sigma/dW (10^{#minus 38} cm^{2}/GeV/nucleon)", 60, 0.7,
        4.0},
       "W", "weight");
   auto hist_W_high_dat = df_high_dat.Histo1D(
