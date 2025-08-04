@@ -227,7 +227,8 @@ auto plot_channels_0pi(T &&df_in, std::string variable,
 
 template <typename T, size_t N = 0>
 auto plot_channels_pi0(T &&df_in, std::string variable,
-                       std::array<double, N> bins = std::array<double, 0>{}) {
+                       std::array<double, N> bins = std::array<double, 0>{},
+                       const std::string &add_name = {}) {
   return std::views::cartesian_product(list_channel_channeldef |
                                            std::views::enumerate,
                                        list_pion_cut | std::views::enumerate) |
@@ -241,13 +242,13 @@ auto plot_channels_pi0(T &&df_in, std::string variable,
            auto &&[pion_name, cut] = pion_cut;
            if constexpr (N != 0)
              return std::make_tuple(
-                 name + " " + pion_pretty_name(pion_name),
+                 name + add_name + " " + pion_pretty_name(pion_name),
                  make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
                             bins, variable, name + "_" + pion_name),
                  count1 * 2 + (count2));
            else
              return std::make_tuple(
-                 name + " " + pion_pretty_name(pion_name),
+                 name + add_name + " " + pion_pretty_name(pion_name),
                  make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
                             variable, name + "_" + pion_name),
                  count1 * 2 + (count2));
@@ -471,11 +472,11 @@ int main(int argc, char *argv[]) {
       {"Q2_vs_q0", "Q2_vs_q0;Q^{2};q_{0}", 50, 0, 5, 50, 0, 5}, "Q2", "q0",
       "weight");
   auto hist_q0_q2_high_dat = df_high_dat.Histo2D(
-      {"Q2_vs_q0_high_dat", "Q2_vs_q0;Q^{2};q_{0}", 50, 0, 5, 50, 0, 5}, "Q2", "q0",
-      "weight");
+      {"Q2_vs_q0_high_dat", "Q2_vs_q0;Q^{2};q_{0}", 50, 0, 5, 50, 0, 5}, "Q2",
+      "q0", "weight");
   auto hist_W = rdf_pi0_after_cut.Histo1D(
-      {"W_all", "W;W (GeV);d#sigma/dW (10^{#minus 38} cm^{2}/GeV/nucleon)", 60, 0.7,
-       4.0},
+      {"W_all", "W;W (GeV);d#sigma/dW (10^{#minus 38} cm^{2}/GeV/nucleon)", 60,
+       0.7, 4.0},
       "W", "weight");
   auto hist_W_high_dat = df_high_dat.Histo1D(
       {"W_high_dat",
@@ -483,7 +484,21 @@ int main(int argc, char *argv[]) {
        0.7, 4.0},
       "W", "weight");
 
+  auto plot_W_pi0 =
+      plot_channels_pi0(rdf_pi0_after_cut, "W", std::array<double, 0>{}, "all");
+  auto plot_W_pi0_high_dat =
+      plot_channels_pi0(df_high_dat, "W", std::array<double, 0>{}, "high_dat");
+  // merge 2 lists
+  plot_W_pi0.insert(plot_W_pi0.end(), plot_W_pi0_high_dat.begin(),
+                    plot_W_pi0_high_dat.end());
+
   auto file = std::make_unique<TFile>("dtl_all.root", "RECREATE");
+
+  for (auto &&plot : plot_W_pi0 | std::views::elements<1>) {
+    plot->Scale((12. / 13.) / n_runs / 10, "width");
+    file->Add(plot.GetPtr());
+  }
+
   hist2d->Scale((12. / 13.) / n_runs / 10, "width");
   file->Add(hist2d.GetPtr());
   hist2d_another->Scale((12. / 13.) / n_runs / 10, "width");
