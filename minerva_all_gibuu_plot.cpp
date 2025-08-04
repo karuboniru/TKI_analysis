@@ -48,7 +48,8 @@ const std::vector<std::tuple<std::string, std::function<bool(int)>>>
 
 // pion count definition for pi0 channel
 const std::vector<std::tuple<std::string, std::function<bool(size_t)>>>
-    list_pion_cut{{"1pi0", [](size_t i) { return i == 1; }},
+    list_pion_cut{{"any", [](size_t i) { return true; }},
+                  {"1pi0", [](size_t i) { return i == 1; }},
                   {"Mpi0", [](size_t i) { return i > 1; }}};
 
 std::string pion_pretty_name(std::string s) {
@@ -250,7 +251,7 @@ auto plot_channels_pi0(T &&df_in, std::string variable,
              return std::make_tuple(
                  name + add_name + " " + pion_pretty_name(pion_name),
                  make_plots(df_in.Filter(id, {"channel"}).Filter(cut, {"npi0"}),
-                            variable, name + "_" + pion_name),
+                            variable, name + add_name + "_" + pion_name),
                  count1 * 2 + (count2));
          }) |
          std::ranges::to<std::vector>();
