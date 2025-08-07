@@ -493,6 +493,12 @@ int main(int argc, char *argv[]) {
   plot_W_pi0.insert(plot_W_pi0.end(), plot_W_pi0_high_dat.begin(),
                     plot_W_pi0_high_dat.end());
 
+  rdf_pi0_after_cut.Filter("channel>= 2 && channel <= 31")
+      .Snapshot("check", "check.root",
+                {"dalphat", "W", "Q2", "q0", "StdHepN", "StdHepPdg",
+                 "StdHepStatus", "weight", "channel", "InitNucleon",
+                 "InitNeutrino", "PrimaryLepton", "full_hadron"});
+
   auto file = std::make_unique<TFile>("dtl_all.root", "RECREATE");
 
   for (auto &&plot : plot_W_pi0 | std::views::elements<1>) {
