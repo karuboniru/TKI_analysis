@@ -48,8 +48,8 @@ struct Lepton2p2h {
 const char *const common_input = R"(
 &nl_fluxcuts
       Enu_lower_cut    = 0.0
-      Enu_upper_cut    = 50.0  
-      energylimit_for_Qsrec = T 
+      Enu_upper_cut    = 50.0
+      energylimit_for_Qsrec = T
 /
 
 &initDensity
@@ -165,11 +165,11 @@ std::string build_target(const target &t) {
 &target
       Z={}
       A={}
-      densitySwitch_Static=2 
+      densitySwitch_Static=2
       fermiMomentum_input=0.225
       fermiMotion=.true.
       ReAdjustForConstBinding=.true.
-      ConstBinding=-0.008 		
+      ConstBinding=-0.008
 /
 )",
       t.Z, t.A);
@@ -179,18 +179,18 @@ std::string build_input(const input &i) {
   return std::format(
       R"(
 &input
-      eventtype=5 
+      eventtype=5
 
-      numEnsembles={} 
-      numTimeSteps={} 
+      numEnsembles={}
+      numTimeSteps={}
 
-      delta_T={}  
+      delta_T={}
 
-      fullensemble=.true.  
-      localEnsemble=.true. 
+      fullensemble=.true.
+      localEnsemble=.true.
 
       num_runs_SameEnergy={}
-      num_Energies=1  
+      num_Energies=1
 
       printParticleVectors=.false.
       freezeRealParticles=.true.
@@ -235,7 +235,7 @@ std::string build_XsectionRatios_input(const XsectionRatios_input &x) {
   return std::format(
       R"(
 &XsectionRatios_input
-      flagScreen = .false.      ! turns off any in-medium changes of nucleon-nucleon cross sections  
+      flagScreen = .false.      ! turns off any in-medium changes of nucleon-nucleon cross sections
       ScreenMode = 1            ! in-medium screening of NN X-sections, following Li and Machleidt
 
       flagInMedium = {}         ! turns off any in-medium changes in deciding to keep an event
@@ -272,7 +272,9 @@ int main(int argc, char **argv) {
                   ("InMediumMode",  po::value<int>()->default_value(2),         "Oset width modification for Delta")
                   ("alpha",         po::value<double>()->default_value(1.2),      "alpha for Song-Ko")
                   ("adep",         po::value<int>()->default_value(2),      "Adep for 2p2h")
-                  ("version",         po::value<std::string>()->default_value("2025"),      "GiBUU version");
+                  ("fsi",         po::value<bool>()->default_value(true),      "enable fsi?")
+                  ("version",         po::value<std::string>()->default_value("2025"),      "GiBUU version")
+                  ;
   // clang-format on
   po::variables_map vm;
   try {
@@ -294,6 +296,8 @@ int main(int argc, char **argv) {
   int InMediumMode = vm["InMediumMode"].as<int>();
   double alpha = vm["alpha"].as<double>();
   int adep = vm["adep"].as<int>();
+  bool fsi = vm["fsi"].as<bool>();
+  auto num_steps = fsi ? 300 : 0;
 
   // upper to lower for experiment
   std::ranges::transform(experiment, experiment.begin(),
@@ -306,12 +310,16 @@ int main(int argc, char **argv) {
     out << build_neutrino_induced(
                {.nuExp = 25, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
-        << build_input({.path_to_input = path_to_input, .version = version});
+        << build_input({.numTimeSteps = num_steps,
+                        .path_to_input = path_to_input,
+                        .version = version});
   } else if (experiment == "t2k") {
     out << build_neutrino_induced(
                {.nuExp = 9, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
-        << build_input({.path_to_input = path_to_input, .version = version});
+        << build_input({.numTimeSteps = num_steps,
+                        .path_to_input = path_to_input,
+                        .version = version});
   } else if (experiment == "microboone") {
     out << build_neutrino_induced(
                {.nuExp = 99,
@@ -319,6 +327,7 @@ int main(int argc, char **argv) {
                 .include2pi = include2pi})
         << build_target({.Z = 18, .A = 40})
         << build_input({.numEnsembles = 3000,
+                        .numTimeSteps = num_steps,
                         .path_to_input = path_to_input,
                         .version = version});
   } else {
