@@ -277,7 +277,8 @@ int main(int argc, char *argv[]) {
        "Additional text") //
       ("text-pi0", po::value<std::string>()->default_value(""),
        "Additional text") //
-      ("help", "produce help message");
+      ("b", po::value<double>(),
+       "binding energy_to_use (MeV)")("help", "produce help message");
   po::positional_options_description p;
   p.add("input-files", -1);
   po::variables_map vm;
@@ -298,6 +299,12 @@ int main(int argc, char *argv[]) {
   auto text_pi0 = vm["text-pi0"].as<std::string>();
   auto tag_tki_base = vm["add-label-tki"].as<char>();
   auto tag_var_base = vm["add-label-var"].as<char>();
+  std::optional<double> binding_energy_to_use;
+  if (vm.count("b")) {
+    binding_energy_to_use = vm["b"].as<double>() / 1E3;
+    std::cout << "Use binding energy " << binding_energy_to_use.value() * 1E3
+              << " MeV" << std::endl;
+  }
   std::cout << "Processing " << n_runs << " files" << std::endl;
 
   TH1::AddDirectory(false);
@@ -316,8 +323,8 @@ int main(int argc, char *argv[]) {
       },
       "channel", std::set<int>{});
 
-  auto doTKI_pi0 = [](ROOT::RDF::RNode d) {
-    return CommonVariableDefinePI0(DoTKICut_MINERvA_pi0(std::move(d)))
+  auto doTKI_pi0 = [=](ROOT::RDF::RNode d) {
+    return CommonVariableDefinePI0(DoTKICut_MINERvA_pi0(std::move(d)), binding_energy_to_use)
         .Define("npi0",
                 [](ROOT::RVec<TLorentzVector> &pions) { return pions.size(); },
                 {"good_pion"})
@@ -326,8 +333,8 @@ int main(int argc, char *argv[]) {
         .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"});
   };
 
-  auto doTKI_0pi = [](ROOT::RDF::RNode d) {
-    return CommonVariableDefine0PI(DoTKICut_MINERvA0PI(std::move(d)))
+  auto doTKI_0pi = [=](ROOT::RDF::RNode d) {
+    return CommonVariableDefine0PI(DoTKICut_MINERvA0PI(std::move(d)), binding_energy_to_use)
         .Define("dalphat", [](TKIVars &vars) { return vars.dalphat; },
                 {"TKIVars"})
         .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"});

@@ -176,7 +176,8 @@ ROOT::RDF::RNode vars_define(ROOT::RDF::RNode df) {
               {"leading_proton"});
 }
 
-ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
+ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df,
+                                         std::optional<double> b) {
   return vars_define(
       df.Define("leading_proton",
                 [](ROOT::RVec<TLorentzVector> &protons) {
@@ -219,11 +220,11 @@ ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
                   },
                   {"leading_pion"})
           .Define("TKIVars",
-                  [](NeutrinoEvent &e, const TLorentzVector &neutrino_p,
-                     const TLorentzVector &muon_p,
-                     const TLorentzVector &full_hadron) {
-                    auto ret =
-                        getCommonTKI(12, 6, &neutrino_p, &muon_p, &full_hadron);
+                  [=](NeutrinoEvent &e, const TLorentzVector &neutrino_p,
+                      const TLorentzVector &muon_p,
+                      const TLorentzVector &full_hadron) {
+                    auto ret = getCommonTKI(12, 6, &neutrino_p, &muon_p,
+                                            &full_hadron, b);
                     if (ret.dalphat == -999) {
                       ret.dalphat = gRandom->Uniform(0, 1) * 180;
                     }
@@ -232,7 +233,8 @@ ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
                   {"EventRecord", "neutrino_p", "muon_p", "full_hadron"}));
 }
 
-ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df) {
+ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df,
+                                         std::optional<double> b) {
   return vars_define(
       df.Define("leading_proton",
                 [](ROOT::RVec<TLorentzVector> &protons) {
@@ -249,10 +251,10 @@ ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df) {
           .Alias("neutrino_p", "InitNeutrino")
           .Alias("muon_p", "PrimaryLepton")
           .Define("TKIVars",
-                  [](NeutrinoEvent &e, TLorentzVector &neutrino_p,
+                  [=](NeutrinoEvent &e, TLorentzVector &neutrino_p,
                      TLorentzVector &muon_p, TLorentzVector &full_hadron) {
                     auto ret =
-                        getCommonTKI(12, 6, &neutrino_p, &muon_p, &full_hadron);
+                        getCommonTKI(12, 6, &neutrino_p, &muon_p, &full_hadron, b);
                     if (ret.dalphat == -999) {
                       ret.dalphat = gRandom->Uniform(0, 1) * 180;
                     }

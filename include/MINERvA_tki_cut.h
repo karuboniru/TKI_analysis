@@ -6,6 +6,7 @@
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
+#include <optional>
 
 class NeutrinoEvent;
 
@@ -17,5 +18,5 @@ ROOT::RDF::RNode DoTKICut_MINERvA0PI(ROOT::RDF::RNode df) ;
 
 
 
-ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df);
-ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df);
+ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df, std::optional<double> b = std::nullopt);
+ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df, std::optional<double> b = std::nullopt);
