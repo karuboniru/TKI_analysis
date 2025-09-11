@@ -229,7 +229,33 @@ ROOT::RDF::RNode CommonVariableDefinePI0(ROOT::RDF::RNode df) {
                     }
                     return ret;
                   },
-                  {"EventRecord", "neutrino_p", "muon_p", "full_hadron"}));
+                  {"EventRecord", "neutrino_p", "muon_p", "full_hadron"})
+          .Define("TKIVars_b0",
+                  [](NeutrinoEvent &e, const TLorentzVector &neutrino_p,
+                     const TLorentzVector &muon_p,
+                     const TLorentzVector &full_hadron) {
+                    auto ret = getCommonTKI(12, 6, &neutrino_p, &muon_p,
+                                            &full_hadron, 0);
+                    if (ret.dalphat == -999) {
+                      ret.dalphat = gRandom->Uniform(0, 1) * 180;
+                    }
+                    return ret;
+                  },
+                  {"EventRecord", "neutrino_p", "muon_p", "full_hadron"})
+          .Define("TKIVars_bd",
+                  [](NeutrinoEvent &e, const TLorentzVector &neutrino_p,
+                     const TLorentzVector &muon_p,
+                     const TLorentzVector &full_hadron, double b_diff) {
+                    auto ret =
+                        getCommonTKI(12, 6, &neutrino_p, &muon_p, &full_hadron,
+                                     (27.13 + b_diff) * 1e-3);
+                    if (ret.dalphat == -999) {
+                      ret.dalphat = gRandom->Uniform(0, 1) * 180;
+                    }
+                    return ret;
+                  },
+                  {"EventRecord", "neutrino_p", "muon_p", "full_hadron",
+                   "b_diff"}));
 }
 
 ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df) {
@@ -259,6 +285,30 @@ ROOT::RDF::RNode CommonVariableDefine0PI(ROOT::RDF::RNode df) {
                     return ret;
                   },
                   {"EventRecord", "neutrino_p", "muon_p", "leading_proton"})
+          .Define("TKIVars_b0",
+                  [](NeutrinoEvent &e, TLorentzVector &neutrino_p,
+                     TLorentzVector &muon_p, TLorentzVector &full_hadron) {
+                    auto ret = getCommonTKI(12, 6, &neutrino_p, &muon_p,
+                                            &full_hadron, 0);
+                    if (ret.dalphat == -999) {
+                      ret.dalphat = gRandom->Uniform(0, 1) * 180;
+                    }
+                    return ret;
+                  },
+                  {"EventRecord", "neutrino_p", "muon_p", "leading_proton"})
+          .Define(
+              "TKIVars_bd",
+              [](NeutrinoEvent &e, const TLorentzVector &neutrino_p,
+                 const TLorentzVector &muon_p,
+                 const TLorentzVector &full_hadron, double b_diff) {
+                auto ret = getCommonTKI(12, 6, &neutrino_p, &muon_p,
+                                        &full_hadron, (27.13 + b_diff) * 1e-3);
+                if (ret.dalphat == -999) {
+                  ret.dalphat = gRandom->Uniform(0, 1) * 180;
+                }
+                return ret;
+              },
+              {"EventRecord", "neutrino_p", "muon_p", "full_hadron", "b_diff"})
           .Define("dpl_alt",
                   [](const TLorentzVector &muon, const TLorentzVector &hadron) {
                     return getdpLMassless(muon, hadron);

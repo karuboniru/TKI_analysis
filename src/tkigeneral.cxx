@@ -44,7 +44,8 @@ double nuclearMass(const int targetA, const int targetZ) {
   }
 }
 
-double nuclearMassStar(const int targetA, const int targetZ) {
+double nuclearMassStar(const int targetA, const int targetZ,
+                       std::optional<double> b = std::nullopt) {
   if (targetZ == 18 && targetA == 40) {
     // https://www.wolframalpha.com/input/?i=Argon-39+mass+in+gev 36.295028
     // https://www.wolframalpha.com/input/?i=chlorine-39+mass+in+gev 36.2984698
@@ -52,8 +53,9 @@ double nuclearMassStar(const int targetA, const int targetZ) {
     return 36.2967489; // GeV average of the two
   } else {
     // see MAstar() below
-    const double Bin =
-        27.13 / 1E3; // GeV, use C11 excitation energy for the time being
+    // const double Bin =
+    //     27.13 / 1E3; // GeV, use C11 excitation energy for the time being
+    const double Bin = b.value_or(27.13 / 1E3);
     const double MAstar =
         nuclearMass(targetA, targetZ) - NeutronMass() + Bin; // GeV
 
@@ -620,16 +622,26 @@ double getdPL(const double beamMass, const double dPT, const double pLFS,
   }
 }
 
-void getCommonTKI(const int targetA, const int targetZ,
-                  const TLorentzVector *tmp4pBeam,
-                  const TLorentzVector *tmp4pScatter,
-                  const TLorentzVector *tmp4pRecoil, double &dalphat,
-                  double &dphit, double &dpt, double &dpTT, double &beamCalcP,
-                  double &IApN, double &recoilM, double &recoilP, double &dpL) {
-  //
-  // note that this is for general calculation, all particle energy is
-  // sqrt(p^2+m^2)!
-  //
+TKIVars getCommonTKI(const int targetA, const int targetZ,
+                     const TLorentzVector *tmp4pBeam,
+                     const TLorentzVector *tmp4pScatter,
+                     const TLorentzVector *tmp4pRecoil,
+                     std::optional<double> b) {
+  TKIVars ret{};
+  auto &dalphat = ret.dalphat;
+  auto &dphit = ret.dphit;
+  auto &dpt = ret.dpt;
+  auto &dpTT = ret.dpTT;
+  auto &beamCalcP = ret.beamCalcP;
+  auto &IApN = ret.IApN;
+  auto &recoilM = ret.recoilM;
+  auto &recoilP = ret.recoilP;
+  auto &dpL = ret.dpL;
+  auto &deriv = ret.deriv;
+
+  // getCommonTKI(targetA, targetZ, tmp4pBeam, tmp4pScatter, tmp4pRecoil, b,
+  //              ret.dalphat, ret.dphit, ret.dpt, ret.dpTT, ret.beamCalcP,
+  //              ret.IApN, ret.recoilM, ret.recoilP, ret.dpL);
   const TLorentzVector tmp4pAllFS =
       tmp4pScatter ? ((*tmp4pRecoil) + (*tmp4pScatter)) : (*tmp4pRecoil);
   const TVector3 vdPt = getPtVect(&tmp4pAllFS, tmp4pBeam);
@@ -667,6 +679,9 @@ void getCommonTKI(const int targetA, const int targetZ,
   // states which are not in the previous calcuation for MINERvA mu and proton
   const double pLFS = tmp4pAllFS.Vect().Dot(tmp4pBeam->Vect().Unit());
   const double ma = nuclearMass(targetA, targetZ);
+  const double pLRecoil = tmp4pRecoil->Vect().Dot(tmp4pBeam->Vect().Unit());
+  const double pLScatter = tmp4pScatter->Vect().Dot(tmp4pBeam->Vect().Unit());
+  const double R = ma + pLRecoil + pLScatter - tmp4pAllFS.E();
 
   // printf("testbug  P %f E %f M %f\n", tmp4pBeam->P(), tmp4pBeam->E(),
   // tmp4pBeam->M());
@@ -675,10 +690,17 @@ void getCommonTKI(const int targetA, const int targetZ,
   { //(1)---> without knowledge of the beam momentum/energy, only direction and
     // mass
     const double mastar =
-        nuclearMassStar(targetA, targetZ); // only assume one nucleon removal
+        nuclearMassStar(targetA, targetZ, b); // only assume one nucleon removal
+    const auto dpl1 = (R * R - dpt * dpt - mastar * mastar) / (2 * R);
+
     // double getdPL(const double beamMass, const double dPT, const double pLFS,
     // const double eFS, const double m1, const double m2)
     dpL = getdPL(tmp4pBeam->M(), dpt, pLFS, tmp4pAllFS.E(), ma, mastar);
+    if (std::abs(dpL - dpl1) > 0.01 * std::abs(dpl1)) {
+      std::cout << "Warning: dpL solutions differ by more than 1%, dpL " << dpL
+                << ", dpl1 " << dpl1 << std::endl;
+      std::exit(1);
+    }
 
     beamCalcP = gkDPLBAD;
     IApN = gkDPLBAD;
@@ -688,6 +710,8 @@ void getCommonTKI(const int targetA, const int targetZ,
           dpL * dpL + dpt * dpt); // implus approximation, emulated nucleon
                                   // momentum assuming single nucleon knock-out
     }
+    deriv = - dpL * mastar / (IApN * R);
+
     // printf("testpn ma %f mastar %f pL %f IApN %f\n", ma, mastar, pL, IApN);
   } //(1)<---
 
@@ -701,16 +725,6 @@ void getCommonTKI(const int targetA, const int targetZ,
     // pLFS)
     recoilP = getRecoilP(tmp4pBeam->P(), dpt, pLFS);
   } //(2)<---
-}
-
-TKIVars getCommonTKI(const int targetA, const int targetZ,
-                     const TLorentzVector *tmp4pBeam,
-                     const TLorentzVector *tmp4pScatter,
-                     const TLorentzVector *tmp4pRecoil) {
-  TKIVars ret;
-  getCommonTKI(targetA, targetZ, tmp4pBeam, tmp4pScatter, tmp4pRecoil,
-               ret.dalphat, ret.dphit, ret.dpt, ret.dpTT, ret.beamCalcP,
-               ret.IApN, ret.recoilM, ret.recoilP, ret.dpL);
   return ret;
 }
 

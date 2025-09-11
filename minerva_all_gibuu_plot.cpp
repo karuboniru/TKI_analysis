@@ -15,6 +15,7 @@
 #include <TLorentzVector.h>
 #include <TMatrixDfwd.h>
 #include <TPad.h>
+#include <TRandom.h>
 #include <TStyle.h>
 #include <TSystem.h>
 #include <TVector3.h>
@@ -25,10 +26,13 @@
 #include <cmath>
 #include <functional>
 #include <memory>
+#include <mutex>
+#include <random>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -306,7 +310,12 @@ int main(int argc, char *argv[]) {
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
   ROOT::RDF::Experimental::AddProgressBar(input);
 #endif
-  auto d = TrackerPrepare(input);
+  std::mutex random_gen_mutex;
+  auto d = TrackerPrepare(input).Define("b_diff", [&]() {
+    std::lock_guard<std::mutex> lock(random_gen_mutex);
+    const double b = 27.13 * 0.1;
+    return gRandom->Uniform(-b, b);
+  });
   auto count = input.Count();
   auto channel_merged = d.Aggregate(
       [](std::set<int> &c_set, int channel) { c_set.insert(channel); },
@@ -323,14 +332,28 @@ int main(int argc, char *argv[]) {
                 {"good_pion"})
         .Define("dalphat", [](TKIVars &vars) { return vars.dalphat; },
                 {"TKIVars"})
-        .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"});
+        .Define("dpL", [](TKIVars &vars) { return vars.dpL; }, {"TKIVars"})
+        .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"})
+        .Define("IApN_b0", [](TKIVars &vars) { return vars.IApN; },
+                {"TKIVars_b0"})
+        .Define("IApN_bd", [](TKIVars &vars) { return vars.IApN; },
+                {"TKIVars_bd"})
+        .Define("deriv", [](TKIVars &vars) { return vars.deriv; }, {"TKIVars"})
+
+        ;
   };
 
   auto doTKI_0pi = [](ROOT::RDF::RNode d) {
-    return CommonVariableDefine0PI(DoTKICut_MINERvA0PI(std::move(d)))
+    return CommonVariableDefine0PI(DoTKICut_MINERvA0PI(d))
         .Define("dalphat", [](TKIVars &vars) { return vars.dalphat; },
                 {"TKIVars"})
-        .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"});
+        .Define("IApN", [](TKIVars &vars) { return vars.IApN; }, {"TKIVars"})
+        .Define("dpL", [](TKIVars &vars) { return vars.dpL; }, {"TKIVars"})
+        .Define("IApN_b0", [](TKIVars &vars) { return vars.IApN; },
+                {"TKIVars_b0"})
+        .Define("IApN_bd", [](TKIVars &vars) { return vars.IApN; },
+                {"TKIVars_bd"})
+        .Define("deriv", [](TKIVars &vars) { return vars.deriv; }, {"TKIVars"});
   };
 
   auto rdf_pi0_after_cut = doTKI_pi0(d);
@@ -492,11 +515,12 @@ int main(int argc, char *argv[]) {
   plot_W_pi0.insert(plot_W_pi0.end(), plot_W_pi0_high_dat.begin(),
                     plot_W_pi0_high_dat.end());
 
-  rdf_pi0_after_cut.Filter("channel>= 2 && channel <= 31")
-      .Snapshot("check", "check.root",
-                {"dalphat", "W", "Q2", "q0", "StdHepN", "StdHepPdg",
-                 "StdHepStatus", "weight", "channel", "InitNucleon",
-                 "InitNeutrino", "PrimaryLepton", "full_hadron"});
+  rdf_pi0_after_cut.Snapshot("check", "checkpi0.root",
+                             {"dalphat", "IApN", "deriv", "weight", "IApN_b0",
+                              "dpL", "IApN_bd", "b_diff"});
+  rdf_0pi_after_cut.Snapshot("check", "check0pi.root",
+                             {"dalphat", "IApN", "deriv", "weight", "IApN_b0",
+                              "dpL", "IApN_bd", "b_diff"});
 
   auto file = std::make_unique<TFile>("dtl_all.root", "RECREATE");
 
