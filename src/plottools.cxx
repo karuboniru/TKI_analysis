@@ -262,7 +262,7 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
     obj.Draw(option.data());
   };
 
-  if (ymax = 0) {
+  if (ymax == 0) {
     ymax =
         1.1 *
         std::ranges::max(
