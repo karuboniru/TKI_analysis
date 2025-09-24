@@ -262,6 +262,36 @@ void do_plot(std::vector<plot_ptr_t> plot_ptrs_list,
     obj.Draw(option.data());
   };
 
+  if (ymax = 0) {
+    ymax =
+        1.1 *
+        std::ranges::max(
+            plot_ptrs_list | std::views::transform([](auto &&ptr) -> double {
+              return std::visit(
+                  [](auto &&arg) -> double {
+                    if (!arg)
+                      return 0.;
+                    if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                                 TH1 *> ||
+                                  std::is_same_v<std::decay_t<decltype(arg)>,
+                                                 ROOT::RDF::RResultPtr<TH1>> ||
+                                  std::is_same_v<std::decay_t<decltype(arg)>,
+                                                 ROOT::RDF::RResultPtr<TH1D>>) {
+                      return arg->GetMaximum();
+                    } else if constexpr (std::is_same_v<
+                                             std::decay_t<decltype(arg)>,
+                                             THStack *>) {
+                      auto stack = arg->GetStack();
+                      auto last = dynamic_cast<TH1 *>(stack->Last());
+                      return last->GetMaximum();
+                    } else {
+                      return 0.;
+                    }
+                  },
+                  ptr);
+            }));
+  }
+
   auto c = getCanvas();
   PadSetup(c.get());
   if (m.left)
