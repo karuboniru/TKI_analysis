@@ -193,9 +193,9 @@ build_theta_data(const std::array<double, 15> &theta_bin_edges) {
 int main(int argc, char *argv[]) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
-  desc.add_options()("input-carbon", po::value<std::vector<std::string>>(),
+  desc.add_options()("input-carbon", po::value<std::vector<std::string>>()->multitoken(),
                      "GiBUU ROOT files for carbon target")(
-      "input-hydrogen", po::value<std::vector<std::string>>(),
+      "input-hydrogen", po::value<std::vector<std::string>>()->multitoken(),
       "GiBUU ROOT files for hydrogen target")(
       "output", po::value<std::string>()->default_value("output_pi_charged.root"),
       "Output ROOT file")("help", "produce help message");
