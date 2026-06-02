@@ -10,6 +10,7 @@
 #include <TPaletteAxis.h>
 #include <TROOT.h>
 #include <TStyle.h>
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <variant>

@@ -204,6 +204,14 @@ target_compile_definitions(
   BASEPATH="${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
+add_executable(MINERvA_pi_single_charged_gibuu MINERvA_pi_single_charged_gibuu.cpp)
+
+# Link all the object files to the main executable
+target_link_libraries(MINERvA_pi_single_charged_gibuu PRIVATE
+  ${GENERAL_LIBS}
+  analysis
+)
+
 add_executable(ubsec ubsec.cxx)
 
 # Link all the object files to the main executable
