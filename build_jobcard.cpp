@@ -45,10 +45,11 @@ struct Lepton2p2h {
   int Adep{2};
 };
 
-const char *const common_input = R"(
+std::string build_common(double enu_min, double enu_max) {
+  return std::format(R"(
 &nl_fluxcuts
-      Enu_lower_cut    = 0.0
-      Enu_upper_cut    = 50.0
+      Enu_lower_cut    = {}
+      Enu_upper_cut    = {}
       energylimit_for_Qsrec = T
 /
 
@@ -133,7 +134,9 @@ const char *const common_input = R"(
       PARP(91)=0.44  ! PYTHIA Parameter tuned to low energies
 /
 
-)";
+)",
+      enu_min, enu_max);
+}
 
 std::string build_neutrino_induced(const neutrino_induced &ni) {
   return std::format(
@@ -263,7 +266,9 @@ int main(int argc, char **argv) {
       desc.add_options()
                   ("path-to-input", po::value<std::string>()->required(), "Path to BUUInput")
                   ("output-file",   po::value<std::string>()->required(), "Output JobCard file")
-                  ("experiment",    po::value<std::string>()->required(), "minerva or microboone")
+                  ("experiment",    po::value<std::string>()->required(), "minerva, minerva_H, microboone, or t2k")
+                  ("enu-min",       po::value<double>()->default_value(0.0),   "Lower cut on neutrino energy (GeV)")
+                  ("enu-max",       po::value<double>()->default_value(50.0),  "Upper cut on neutrino energy (GeV)")
                   ("T",             po::value<int>()->default_value(1),         "T value")
                   ("T2p2h",         po::value<int>()->default_value(0),         "T value for 2p2h process")
                   ("2pibg",         po::value<bool>()->required(),              "Include 2pi BG")
@@ -297,6 +302,8 @@ int main(int argc, char **argv) {
   double alpha = vm["alpha"].as<double>();
   int adep = vm["adep"].as<int>();
   bool fsi = vm["fsi"].as<bool>();
+  double enu_min = vm["enu-min"].as<double>();
+  double enu_max = vm["enu-max"].as<double>();
   auto num_steps = fsi ? 300 : 0;
 
   // upper to lower for experiment
@@ -310,6 +317,13 @@ int main(int argc, char **argv) {
     out << build_neutrino_induced(
                {.nuExp = 25, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
+        << build_input({.numTimeSteps = num_steps,
+                        .path_to_input = path_to_input,
+                        .version = version});
+  } else if (experiment == "minerva_h") {
+    out << build_neutrino_induced(
+               {.nuExp = 25, .FileNameFlux = "", .include2pi = include2pi})
+        << build_target({.Z = 1, .A = 1})
         << build_input({.numTimeSteps = num_steps,
                         .path_to_input = path_to_input,
                         .version = version});
@@ -335,7 +349,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  out << common_input << build_width_Baryon({.mediumSwitch = mediumSwitch})
+  out << build_common(enu_min, enu_max) << build_width_Baryon({.mediumSwitch = mediumSwitch})
       << build_nl_neweN({.T = T, .T_2p2h = T2p2h})
       << build_XsectionRatios_input({.flagInMedium = flagInMedium,
                                      .InMediumMode = InMediumMode,
