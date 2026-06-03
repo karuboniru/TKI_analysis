@@ -311,14 +311,14 @@ int main(int argc, char *argv[]) {
           "d#sigma/dT_{#pi} (10^{-38} cm^{2}/MeV/nucleon)",
           "Pion kinetic energy (MeV)",
           {0.50, 0.65, 0.80, 0.85}, 350., "MINERvA #pi^{#pm} Data", "HIST C",
-          0.050, {.top = 0.04, .bottom = 0.12});
+          0, {.top = 0.04, .bottom = 0.12});
 
   do_plot({&h_theta_data, (TH1 *)&h_theta_CH, gi_theta.get()},
           "theta_pi_charged",
           "d#sigma/d#theta_{#pi} (10^{-38} cm^{2}/degree/nucleon)",
           "Pion angle (degree)",
           {0.14, 0.65, 0.45, 0.85}, 0., "MINERvA #pi^{#pm} Data", "HIST C",
-          0.040, {.top = 0.06, .bottom = 0.11});
+          0, {.top = 0.06, .bottom = 0.11});
 
   output_file->Close();
 
