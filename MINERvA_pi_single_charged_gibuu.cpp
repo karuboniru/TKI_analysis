@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
           "Tk_pi_charged",
           "d#sigma/dT_{#pi} (10^{-38} cm^{2}/MeV/nucleon)",
           "Pion kinetic energy (MeV)",
-          {0.50, 0.65, 0.80, 0.85}, 350., "MINERvA #pi^{#pm} Data", "HIST C",
+          {0.14, 0.80, 0.55, 0.95}, 350., "MINERvA #pi^{#pm} Data", "HIST C",
           0, {.top = 0.04, .bottom = 0.12});
 
   do_plot({&h_theta_data, (TH1 *)&h_theta_CH, gi_theta.get()},
