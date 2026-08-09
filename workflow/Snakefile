@@ -253,7 +253,9 @@ rule jobcard:
         enu_max=SIMULATION["enu_max"]
     shell:
         r"""
+        set +u
         source {params.env:q}
+        set -u
         mkdir -p "$(dirname {output.jobcard:q})"
         {params.executable:q} \
           --path-to-input={params.buuinput:q} \
@@ -304,7 +306,9 @@ rule gibuu:
         cpus_per_task=1
     shell:
         r"""
+        set +u
         source {params.env:q}
+        set -u
         mkdir -p {params.run_dir:q}
         cd {params.run_dir:q}
         {params.executable:q} < {input.jobcard:q} 2>&1 \
@@ -332,7 +336,9 @@ rule convert:
         cpus_per_task=1
     shell:
         r"""
+        set +u
         source {params.env:q}
+        set -u
         {params.executable:q} {input.events:q} {output.record:q} \
           2>&1 | gzip -c > {output.log:q}.tmp
         mv {output.log:q}.tmp {output.log:q}
@@ -387,7 +393,9 @@ rule analyze_sample:
         cpus_per_task=4
     shell:
         r"""
+        set +u
         source {params.env:q}
+        set -u
         {params.executable:q} \
           --output-dir={params.output_dir:q} \
           --add-label-tki=a \
@@ -470,7 +478,9 @@ rule compare_models:
         cpus_per_task=1
     shell:
         r"""
+        set +u
         source {params.env:q}
+        set -u
         {params.executable:q} \
           --default-root={input.default_root:q} \
           --cda-root={input.cda_root:q} \

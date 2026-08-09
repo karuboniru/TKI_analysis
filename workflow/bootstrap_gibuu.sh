@@ -32,7 +32,9 @@ if [[ ! -e buuinput ]]; then
   ln -s buuinput2025 buuinput
 fi
 
+set +u
 source "$env_script"
+set -u
 make -C release -j4
 
 version=$(<release/version.txt)
