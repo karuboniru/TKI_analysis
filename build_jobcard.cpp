@@ -3,6 +3,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <optional>
 
 char bool_to_char(bool b) { return b ? 'T' : 'F'; }
 
@@ -24,6 +25,14 @@ struct input {
   int num_runs_SameEnergy = 10;
   std::string path_to_input;
   std::string version;
+};
+
+struct initRandom {
+  int seed;
+};
+
+struct initNucleus_in_PS {
+  bool useCdA;
 };
 
 struct nl_neweN {
@@ -207,6 +216,26 @@ std::string build_input(const input &i) {
       i.path_to_input, i.version);
 }
 
+std::string build_initRandom(const initRandom &input) {
+  return std::format(
+      R"(
+&initRandom
+      Seed = {}
+/
+)",
+      input.seed);
+}
+
+std::string build_initNucleus_in_PS(const initNucleus_in_PS &input) {
+  return std::format(
+      R"(
+&initNucleus_in_PS
+      useCdA = {}
+/
+)",
+      bool_to_char(input.useCdA));
+}
+
 std::string build_nl_neweN(const nl_neweN &n) {
   return std::format(
       R"(
@@ -269,6 +298,9 @@ int main(int argc, char **argv) {
                   ("experiment",    po::value<std::string>()->required(), "minerva, minerva_H, microboone, or t2k")
                   ("enu-min",       po::value<double>()->default_value(0.0),   "Lower cut on neutrino energy (GeV)")
                   ("enu-max",       po::value<double>()->default_value(50.0),  "Upper cut on neutrino energy (GeV)")
+                  ("num-ensembles", po::value<int>(),                          "Override the experiment default number of ensembles")
+                  ("seed",          po::value<int>()->default_value(0),         "GiBUU random seed (0 uses the system clock)")
+                  ("use-cda",       po::value<bool>()->default_value(false),    "Use the Ciofi degli Atti-Simula nuclear momentum distribution")
                   ("T",             po::value<int>()->default_value(1),         "T value")
                   ("T2p2h",         po::value<int>()->default_value(0),         "T value for 2p2h process")
                   ("2pibg",         po::value<bool>()->required(),              "Include 2pi BG")
@@ -304,7 +336,21 @@ int main(int argc, char **argv) {
   bool fsi = vm["fsi"].as<bool>();
   double enu_min = vm["enu-min"].as<double>();
   double enu_max = vm["enu-max"].as<double>();
+  auto num_ensembles = vm.count("num-ensembles")
+                           ? std::optional<int>{vm["num-ensembles"].as<int>()}
+                           : std::nullopt;
+  int seed = vm["seed"].as<int>();
+  bool use_cda = vm["use-cda"].as<bool>();
   auto num_steps = fsi ? 300 : 0;
+
+  if (num_ensembles.has_value() && num_ensembles.value() <= 0) {
+    std::cerr << "num-ensembles must be positive\n";
+    return 1;
+  }
+  if (seed < 0) {
+    std::cerr << "seed must be non-negative\n";
+    return 1;
+  }
 
   // upper to lower for experiment
   std::ranges::transform(experiment, experiment.begin(),
@@ -317,21 +363,24 @@ int main(int argc, char **argv) {
     out << build_neutrino_induced(
                {.nuExp = 25, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
-        << build_input({.numTimeSteps = num_steps,
+        << build_input({.numEnsembles = num_ensembles.value_or(4000),
+                        .numTimeSteps = num_steps,
                         .path_to_input = path_to_input,
                         .version = version});
   } else if (experiment == "minerva_h") {
     out << build_neutrino_induced(
                {.nuExp = 25, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 1, .A = 1})
-        << build_input({.numTimeSteps = num_steps,
+        << build_input({.numEnsembles = num_ensembles.value_or(4000),
+                        .numTimeSteps = num_steps,
                         .path_to_input = path_to_input,
                         .version = version});
   } else if (experiment == "t2k") {
     out << build_neutrino_induced(
                {.nuExp = 9, .FileNameFlux = "", .include2pi = include2pi})
         << build_target({.Z = 6, .A = 12})
-        << build_input({.numTimeSteps = num_steps,
+        << build_input({.numEnsembles = num_ensembles.value_or(4000),
+                        .numTimeSteps = num_steps,
                         .path_to_input = path_to_input,
                         .version = version});
   } else if (experiment == "microboone") {
@@ -340,7 +389,7 @@ int main(int argc, char **argv) {
                 .FileNameFlux = BASEPATH "/jobcard/microboone.dat",
                 .include2pi = include2pi})
         << build_target({.Z = 18, .A = 40})
-        << build_input({.numEnsembles = 3000,
+        << build_input({.numEnsembles = num_ensembles.value_or(3000),
                         .numTimeSteps = num_steps,
                         .path_to_input = path_to_input,
                         .version = version});
@@ -354,7 +403,9 @@ int main(int argc, char **argv) {
       << build_XsectionRatios_input({.flagInMedium = flagInMedium,
                                      .InMediumMode = InMediumMode,
                                      .alpha = alpha})
-      << build_Lepton2p2h({.Adep = adep}) << '\n';
+      << build_Lepton2p2h({.Adep = adep})
+      << build_initRandom({.seed = seed})
+      << build_initNucleus_in_PS({.useCdA = use_cda}) << '\n';
 
   return 0;
 }

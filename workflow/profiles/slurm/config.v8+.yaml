@@ -1,0 +1,15 @@
+executor: slurm
+jobs: 200
+latency-wait: 120
+keep-going: true
+rerun-incomplete: true
+retries: 2
+printshellcmds: true
+show-failed-logs: true
+default-resources:
+  - slurm_account=juno
+  - slurm_partition=htc
+  - slurm_extra="--licenses=sps"
+  - runtime=600
+  - mem_mb=2500
+  - cpus_per_task=1

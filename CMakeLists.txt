@@ -161,6 +161,11 @@ target_link_libraries(minerva_all_gibuu_plot PRIVATE
   analysis
 )
 
+add_executable(minerva_nuclear_model_compare minerva_nuclear_model_compare.cpp)
+target_link_libraries(minerva_nuclear_model_compare PRIVATE
+  ${GENERAL_LIBS}
+)
+
 
 add_executable(t2k_stk_gibuu t2k_stk_gibuu.cpp)
 

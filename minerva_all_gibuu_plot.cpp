@@ -9,6 +9,7 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RResultPtr.hxx>
+#include <TFile.h>
 #include <THStack.h>
 #include <TLatex.h>
 #include <TLegend.h>
@@ -23,6 +24,7 @@
 #include <nlohmann/json.hpp>
 
 #include <cmath>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <ranges>
@@ -277,6 +279,8 @@ int main(int argc, char *argv[]) {
        "Additional text") //
       ("text-pi0", po::value<std::string>()->default_value(""),
        "Additional text") //
+      ("output-dir", po::value<std::string>()->default_value("."),
+       "Directory for ROOT, JSON, and plot outputs") //
       ("b", po::value<double>(),
        "binding energy_to_use (MeV)")("help", "produce help message");
   po::positional_options_description p;
@@ -292,7 +296,14 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  auto &&files = vm["input-files"].as<std::vector<std::string>>();
+  auto files = vm["input-files"].as<std::vector<std::string>>();
+  for (auto &input_file : files) {
+    input_file = std::filesystem::absolute(input_file).string();
+  }
+  auto output_dir =
+      std::filesystem::absolute(vm["output-dir"].as<std::string>());
+  std::filesystem::create_directories(output_dir);
+  std::filesystem::current_path(output_dir);
   auto n_runs = files.size();
   // auto additional_text = vm["add-text"].as<std::string>();
   auto text_0pi = vm["text-0pi"].as<std::string>();

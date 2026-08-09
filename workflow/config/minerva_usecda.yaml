@@ -1,0 +1,40 @@
+study: minerva_usecda_2025p5
+
+paths:
+  repo_root: /sps/juno/yqiyu/TKI_analysis
+  results_root: /sps/juno/yqiyu/GiBUUGEN/minerva_useCdA_2025p5
+  env_script: /sps/juno/yqiyu/GiBUUGEN/env.sh
+  gibuu_root: /sps/juno/yqiyu/GiBUU2025_p5
+  gibuu_executable: /sps/juno/yqiyu/GiBUU2025_p5/release/objects/GiBUU.x
+  buuinput: /sps/juno/yqiyu/GiBUU2025_p5/buuinput
+  release_archive: /sps/juno/yqiyu/GiBUU2025_p5/release2025.tar.gz
+  buuinput_archive: /sps/juno/yqiyu/GiBUU2025_p5/buuinput2025.tar.gz
+  gibuu_version: /sps/juno/yqiyu/GiBUU2025_p5/release/version.txt
+  build_jobcard: /sps/juno/yqiyu/TKI_analysis/build/build_jobcard
+  gibuu2root: /sps/juno/yqiyu/TKI_analysis/build/gibuu2root
+  analyzer: /sps/juno/yqiyu/TKI_analysis/build/minerva_all_gibuu_plot
+  comparator: /sps/juno/yqiyu/TKI_analysis/build/minerva_nuclear_model_compare
+
+simulation:
+  smoke_replicates: 1
+  production_replicates: 256
+  smoke_num_ensembles: 100
+  production_num_ensembles: 4000
+  num_runs_same_energy: 10
+  smoke_seed_base: 92550000
+  production_seed_base: 25050000
+  enu_min: 0.0
+  enu_max: 50.0
+
+matrix:
+  allow_large_matrix: false
+  max_samples: 2
+  axes:
+    use_cda: [false, true]
+    T: [1]
+    T2p2h: [1]
+    medium_switch: [false]
+    in_medium: ["off"]
+    include_2pi: [true]
+    adep: [2]
+    fsi: [true]

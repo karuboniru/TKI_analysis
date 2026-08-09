@@ -1,0 +1,482 @@
+import itertools
+from pathlib import Path
+import re
+
+from snakemake.exceptions import WorkflowError
+
+
+configfile: "config/minerva_usecda.yaml"
+
+
+PATHS = config["paths"]
+SIMULATION = config["simulation"]
+MATRIX = config["matrix"]
+STUDY = config["study"]
+STUDY_ROOT = Path(PATHS["results_root"]) / STUDY
+
+SCENARIO_AXIS_NAMES = [
+    "T",
+    "T2p2h",
+    "medium_switch",
+    "in_medium",
+    "include_2pi",
+    "adep",
+    "fsi",
+]
+IN_MEDIUM_MODES = {
+    "off": {"flag_in_medium": False, "alpha": 1.2},
+    "song_ko": {"flag_in_medium": True, "alpha": 1.2},
+    "machleidt_li": {"flag_in_medium": True, "alpha": 0.0},
+}
+STAGES = {
+    "smoke": {
+        "replicates": int(SIMULATION["smoke_replicates"]),
+        "num_ensembles": int(SIMULATION["smoke_num_ensembles"]),
+        "seed_base": int(SIMULATION["smoke_seed_base"]),
+    },
+    "production": {
+        "replicates": int(SIMULATION["production_replicates"]),
+        "num_ensembles": int(SIMULATION["production_num_ensembles"]),
+        "seed_base": int(SIMULATION["production_seed_base"]),
+    },
+}
+
+
+def bool_token(value):
+    return "T" if value else "F"
+
+
+def scenario_slug(values):
+    return (
+        f"T{values['T']}_T2p2h{values['T2p2h']}"
+        f"_ms{bool_token(values['medium_switch'])}"
+        f"_im{values['in_medium']}"
+        f"_2pi{bool_token(values['include_2pi'])}"
+        f"_Adep{values['adep']}"
+        f"_fsi{bool_token(values['fsi'])}"
+    )
+
+
+axes = MATRIX["axes"]
+if set(axes["use_cda"]) != {False, True}:
+    raise WorkflowError("matrix.axes.use_cda must contain exactly false and true")
+unknown_in_medium = set(axes["in_medium"]) - set(IN_MEDIUM_MODES)
+if unknown_in_medium:
+    raise WorkflowError(f"Unknown in_medium modes: {sorted(unknown_in_medium)}")
+
+SCENARIOS = {}
+for combination in itertools.product(*(axes[name] for name in SCENARIO_AXIS_NAMES)):
+    values = dict(zip(SCENARIO_AXIS_NAMES, combination, strict=True))
+    slug = scenario_slug(values)
+    if slug in SCENARIOS:
+        raise WorkflowError(f"Duplicate scenario slug: {slug}")
+    SCENARIOS[slug] = values
+
+SAMPLE_COUNT = len(SCENARIOS) * len(axes["use_cda"])
+LARGE_MATRIX_BLOCKED = (
+    SAMPLE_COUNT > int(MATRIX["max_samples"]) and not MATRIX["allow_large_matrix"]
+)
+
+SCENARIO_PATTERN = "(?:" + "|".join(re.escape(value) for value in SCENARIOS) + ")"
+PRE_FLIGHT = str(STUDY_ROOT / "preflight.json")
+MATRIX_GUARD = str(STUDY_ROOT / "matrix_guard.ok")
+JOBCARD_PATTERN = str(
+    STUDY_ROOT
+    / "{stage}"
+    / "{scenario}"
+    / "use_cda_{use_cda}"
+    / "runs"
+    / "{replicate}"
+    / "jobcard.job"
+)
+EVENTS_PATTERN = str(Path(JOBCARD_PATTERN).with_name("FinalEvents.dat"))
+GIBUU_LOG_PATTERN = str(Path(JOBCARD_PATTERN).with_name("gibuu.log.gz"))
+RECORD_PATTERN = str(Path(JOBCARD_PATTERN).with_name("record.root"))
+RECORD_LOG_PATTERN = str(Path(JOBCARD_PATTERN).with_name("record.log.gz"))
+VALIDATION_PATTERN = str(Path(JOBCARD_PATTERN).with_name("validated.json"))
+ANALYSIS_ROOT_PATTERN = str(
+    STUDY_ROOT
+    / "{stage}"
+    / "{scenario}"
+    / "use_cda_{use_cda}"
+    / "analysis"
+    / "dtl_all.root"
+)
+ANALYSIS_JSON_PATTERN = str(Path(ANALYSIS_ROOT_PATTERN).with_name("chi2.json"))
+ANALYSIS_LOG_PATTERN = str(Path(ANALYSIS_ROOT_PATTERN).with_name("analysis.log"))
+MANIFEST_PATTERN = str(
+    STUDY_ROOT
+    / "{stage}"
+    / "{scenario}"
+    / "use_cda_{use_cda}"
+    / "manifest.json"
+)
+COMPARISON_DIR_PATTERN = str(
+    STUDY_ROOT / "{stage}" / "{scenario}" / "comparison"
+)
+COMPARISON_ROOT_PATTERN = str(Path(COMPARISON_DIR_PATTERN) / "comparison.root")
+COMPARISON_JSON_PATTERN = str(Path(COMPARISON_DIR_PATTERN) / "comparison.json")
+COMPARISON_LOG_PATTERN = str(Path(COMPARISON_DIR_PATTERN) / "comparison.log")
+COMPARISON_PLOT_PATTERNS = [
+    str(Path(COMPARISON_DIR_PATTERN) / f"{observable}.{extension}")
+    for observable in ["IApN_pi0", "IApN_0pi", "dalphat_pi0", "dalphat_0pi"]
+    for extension in ["pdf", "svg", "eps"]
+]
+
+
+wildcard_constraints:
+    stage="smoke|production",
+    scenario=SCENARIO_PATTERN,
+    use_cda="F|T",
+    replicate=r"\d{4}"
+
+
+localrules: matrix_guard, preflight, jobcard, sample_manifest
+
+
+def stage_settings(stage):
+    return STAGES[stage]
+
+
+def replicate_ids(stage):
+    return [
+        f"{index:04d}"
+        for index in range(1, stage_settings(stage)["replicates"] + 1)
+    ]
+
+
+def seed_for(stage, replicate):
+    return stage_settings(stage)["seed_base"] + int(replicate)
+
+
+def run_paths(pattern, wildcards):
+    return [
+        pattern.format(
+            stage=wildcards.stage,
+            scenario=wildcards.scenario,
+            use_cda=wildcards.use_cda,
+            replicate=replicate,
+        )
+        for replicate in replicate_ids(wildcards.stage)
+    ]
+
+
+def sample_path(pattern, stage, scenario, use_cda):
+    return pattern.format(stage=stage, scenario=scenario, use_cda=use_cda)
+
+
+def aggregate_targets(stage):
+    return [
+        COMPARISON_JSON_PATTERN.format(stage=stage, scenario=scenario)
+        for scenario in SCENARIOS
+    ]
+
+
+rule all:
+    input:
+        aggregate_targets("production")
+
+
+rule smoke:
+    input:
+        aggregate_targets("smoke")
+
+
+rule production:
+    input:
+        aggregate_targets("production")
+
+
+rule matrix_guard:
+    output:
+        MATRIX_GUARD
+    run:
+        if LARGE_MATRIX_BLOCKED:
+            production_jobs = SAMPLE_COUNT * int(
+                SIMULATION["production_replicates"]
+            )
+            raise WorkflowError(
+                f"Configuration expands to {SAMPLE_COUNT} samples and "
+                f"{production_jobs} production GiBUU jobs. Review the dry-run "
+                "and set matrix.allow_large_matrix=true explicitly to enable it."
+            )
+        output_path = Path(output[0])
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(f"samples={SAMPLE_COUNT}\n")
+
+
+rule preflight:
+    input:
+        guard=MATRIX_GUARD
+    output:
+        PRE_FLIGHT
+    params:
+        paths=PATHS,
+        study=STUDY
+    script:
+        "scripts/preflight.py"
+
+
+rule jobcard:
+    input:
+        preflight=PRE_FLIGHT
+    output:
+        jobcard=JOBCARD_PATTERN
+    params:
+        executable=PATHS["build_jobcard"],
+        env=PATHS["env_script"],
+        buuinput=PATHS["buuinput"],
+        T=lambda wildcards: SCENARIOS[wildcards.scenario]["T"],
+        T2p2h=lambda wildcards: SCENARIOS[wildcards.scenario]["T2p2h"],
+        medium_switch=lambda wildcards: str(
+            SCENARIOS[wildcards.scenario]["medium_switch"]
+        ).lower(),
+        flag_in_medium=lambda wildcards: str(
+            IN_MEDIUM_MODES[SCENARIOS[wildcards.scenario]["in_medium"]][
+                "flag_in_medium"
+            ]
+        ).lower(),
+        alpha=lambda wildcards: IN_MEDIUM_MODES[
+            SCENARIOS[wildcards.scenario]["in_medium"]
+        ]["alpha"],
+        include_2pi=lambda wildcards: str(
+            SCENARIOS[wildcards.scenario]["include_2pi"]
+        ).lower(),
+        adep=lambda wildcards: SCENARIOS[wildcards.scenario]["adep"],
+        fsi=lambda wildcards: str(SCENARIOS[wildcards.scenario]["fsi"]).lower(),
+        use_cda=lambda wildcards: "true" if wildcards.use_cda == "T" else "false",
+        seed=lambda wildcards: seed_for(wildcards.stage, wildcards.replicate),
+        num_ensembles=lambda wildcards: stage_settings(wildcards.stage)[
+            "num_ensembles"
+        ],
+        enu_min=SIMULATION["enu_min"],
+        enu_max=SIMULATION["enu_max"]
+    shell:
+        r"""
+        source {params.env:q}
+        mkdir -p "$(dirname {output.jobcard:q})"
+        {params.executable:q} \
+          --path-to-input={params.buuinput:q} \
+          --output-file={output.jobcard:q} \
+          --experiment=minerva \
+          --version=2025 \
+          --enu-min={params.enu_min} \
+          --enu-max={params.enu_max} \
+          --num-ensembles={params.num_ensembles} \
+          --seed={params.seed} \
+          --use-cda={params.use_cda} \
+          --T={params.T} \
+          --T2p2h={params.T2p2h} \
+          --mediumSwitch={params.medium_switch} \
+          --flagInMedium={params.flag_in_medium} \
+          --InMediumMode=2 \
+          --alpha={params.alpha} \
+          --2pibg={params.include_2pi} \
+          --adep={params.adep} \
+          --fsi={params.fsi}
+        """
+
+
+rule gibuu:
+    input:
+        preflight=PRE_FLIGHT,
+        jobcard=JOBCARD_PATTERN
+    output:
+        events=temp(EVENTS_PATTERN),
+        log=GIBUU_LOG_PATTERN
+    params:
+        executable=PATHS["gibuu_executable"],
+        env=PATHS["env_script"],
+        run_dir=lambda wildcards: str(
+            Path(
+                EVENTS_PATTERN.format(
+                    stage=wildcards.stage,
+                    scenario=wildcards.scenario,
+                    use_cda=wildcards.use_cda,
+                    replicate=wildcards.replicate,
+                )
+            ).parent
+        )
+    threads: 1
+    resources:
+        mem_mb=2500,
+        runtime=600,
+        cpus_per_task=1
+    shell:
+        r"""
+        source {params.env:q}
+        mkdir -p {params.run_dir:q}
+        cd {params.run_dir:q}
+        {params.executable:q} < {input.jobcard:q} 2>&1 \
+          | gzip -c > {output.log:q}.tmp
+        mv {output.log:q}.tmp {output.log:q}
+        test -s {output.events:q}
+        gzip -cd {output.log:q} | grep 'BUU simulation: finished' > /dev/null
+        """
+
+
+rule convert:
+    input:
+        preflight=PRE_FLIGHT,
+        events=EVENTS_PATTERN
+    output:
+        record=RECORD_PATTERN,
+        log=RECORD_LOG_PATTERN
+    params:
+        executable=PATHS["gibuu2root"],
+        env=PATHS["env_script"]
+    threads: 1
+    resources:
+        mem_mb=2500,
+        runtime=60,
+        cpus_per_task=1
+    shell:
+        r"""
+        source {params.env:q}
+        {params.executable:q} {input.events:q} {output.record:q} \
+          2>&1 | gzip -c > {output.log:q}.tmp
+        mv {output.log:q}.tmp {output.log:q}
+        test -s {output.record:q}
+        """
+
+
+rule validate_record:
+    input:
+        record=RECORD_PATTERN,
+        events=EVENTS_PATTERN
+    output:
+        VALIDATION_PATTERN
+    params:
+        stage=lambda wildcards: wildcards.stage,
+        scenario=lambda wildcards: wildcards.scenario,
+        use_cda=lambda wildcards: wildcards.use_cda == "T",
+        replicate=lambda wildcards: wildcards.replicate,
+        seed=lambda wildcards: seed_for(wildcards.stage, wildcards.replicate)
+    script:
+        "scripts/validate_record.py"
+
+
+rule analyze_sample:
+    input:
+        preflight=PRE_FLIGHT,
+        records=lambda wildcards: run_paths(RECORD_PATTERN, wildcards),
+        validations=lambda wildcards: run_paths(VALIDATION_PATTERN, wildcards)
+    output:
+        root=ANALYSIS_ROOT_PATTERN,
+        json=ANALYSIS_JSON_PATTERN
+    log:
+        ANALYSIS_LOG_PATTERN
+    params:
+        executable=PATHS["analyzer"],
+        env=PATHS["env_script"],
+        output_dir=lambda wildcards: str(
+            Path(
+                sample_path(
+                    ANALYSIS_ROOT_PATTERN,
+                    wildcards.stage,
+                    wildcards.scenario,
+                    wildcards.use_cda,
+                )
+            ).parent
+        ),
+        text=lambda wildcards: f"GiBUU 2025p5, useCdA={wildcards.use_cda}"
+    threads: 4
+    resources:
+        mem_mb=4000,
+        runtime=60,
+        cpus_per_task=4
+    shell:
+        r"""
+        source {params.env:q}
+        {params.executable:q} \
+          --output-dir={params.output_dir:q} \
+          --add-label-tki=a \
+          --add-label-var=a \
+          --text-0pi={params.text:q} \
+          --text-pi0={params.text:q} \
+          {input.records:q} > {log:q} 2>&1
+        test -s {output.root:q}
+        test -s {output.json:q}
+        """
+
+
+rule sample_manifest:
+    input:
+        preflight=PRE_FLIGHT,
+        jobcards=lambda wildcards: run_paths(JOBCARD_PATTERN, wildcards),
+        records=lambda wildcards: run_paths(RECORD_PATTERN, wildcards),
+        validations=lambda wildcards: run_paths(VALIDATION_PATTERN, wildcards),
+        analysis_root=ANALYSIS_ROOT_PATTERN,
+        analysis_json=ANALYSIS_JSON_PATTERN
+    output:
+        MANIFEST_PATTERN
+    params:
+        study=STUDY,
+        stage=lambda wildcards: wildcards.stage,
+        scenario_config=lambda wildcards: SCENARIOS[wildcards.scenario],
+        use_cda=lambda wildcards: wildcards.use_cda == "T",
+        num_ensembles=lambda wildcards: stage_settings(wildcards.stage)[
+            "num_ensembles"
+        ],
+        num_runs_same_energy=SIMULATION["num_runs_same_energy"],
+        seeds=lambda wildcards: [
+            seed_for(wildcards.stage, replicate)
+            for replicate in replicate_ids(wildcards.stage)
+        ]
+    script:
+        "scripts/write_manifest.py"
+
+
+rule compare_models:
+    input:
+        default_root=lambda wildcards: sample_path(
+            ANALYSIS_ROOT_PATTERN, wildcards.stage, wildcards.scenario, "F"
+        ),
+        cda_root=lambda wildcards: sample_path(
+            ANALYSIS_ROOT_PATTERN, wildcards.stage, wildcards.scenario, "T"
+        ),
+        default_json=lambda wildcards: sample_path(
+            ANALYSIS_JSON_PATTERN, wildcards.stage, wildcards.scenario, "F"
+        ),
+        cda_json=lambda wildcards: sample_path(
+            ANALYSIS_JSON_PATTERN, wildcards.stage, wildcards.scenario, "T"
+        ),
+        default_manifest=lambda wildcards: sample_path(
+            MANIFEST_PATTERN, wildcards.stage, wildcards.scenario, "F"
+        ),
+        cda_manifest=lambda wildcards: sample_path(
+            MANIFEST_PATTERN, wildcards.stage, wildcards.scenario, "T"
+        )
+    output:
+        root=COMPARISON_ROOT_PATTERN,
+        json=COMPARISON_JSON_PATTERN,
+        plots=COMPARISON_PLOT_PATTERNS
+    log:
+        COMPARISON_LOG_PATTERN
+    params:
+        executable=PATHS["comparator"],
+        env=PATHS["env_script"],
+        output_dir=lambda wildcards: str(
+            Path(
+                COMPARISON_ROOT_PATTERN.format(
+                    stage=wildcards.stage, scenario=wildcards.scenario
+                )
+            ).parent
+        )
+    threads: 1
+    resources:
+        mem_mb=2000,
+        runtime=30,
+        cpus_per_task=1
+    shell:
+        r"""
+        source {params.env:q}
+        {params.executable:q} \
+          --default-root={input.default_root:q} \
+          --cda-root={input.cda_root:q} \
+          --default-json={input.default_json:q} \
+          --cda-json={input.cda_json:q} \
+          --output-dir={params.output_dir:q} > {log:q} 2>&1
+        test -s {output.root:q}
+        test -s {output.json:q}
+        """
