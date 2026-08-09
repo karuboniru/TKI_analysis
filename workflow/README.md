@@ -45,18 +45,18 @@ physics and analysis path.
 source /sps/juno/yqiyu/GiBUUGEN/env.sh
 cd /sps/juno/yqiyu/TKI_analysis
 
-uv run snakemake --snakefile workflow/Snakefile \
+env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml --lint
 
-uv run snakemake --snakefile workflow/Snakefile \
+env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm --dry-run smoke
 
-uv run snakemake --snakefile workflow/Snakefile \
+env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm smoke
 
-uv run snakemake --snakefile workflow/Snakefile \
+env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm production
 ```
@@ -70,10 +70,10 @@ Useful monitoring and recovery commands are:
 
 ```bash
 squeue -u "$USER"
-uv run snakemake --snakefile workflow/Snakefile \
+env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm --summary
-uv run snakemake --snakefile workflow/Snakefile \
+env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm --rerun-incomplete production
 ```
