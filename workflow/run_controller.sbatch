@@ -4,6 +4,7 @@
 #SBATCH --licenses=sps
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
+#SBATCH --time=7-00:00:00
 #SBATCH --output=/sps/juno/yqiyu/GiBUUGEN/minerva_useCdA_2025p5/snakemake_controller_%j.slurm.log
 
 set -euo pipefail
