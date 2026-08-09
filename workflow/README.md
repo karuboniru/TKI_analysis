@@ -52,19 +52,28 @@ env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm --dry-run smoke
 
-env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
-  --configfile workflow/config/minerva_usecda.yaml \
-  --profile workflow/profiles/slurm smoke
-
-env -u PYTHONPATH uv run snakemake --snakefile workflow/Snakefile \
-  --configfile workflow/config/minerva_usecda.yaml \
-  --profile workflow/profiles/slurm production
+workflow/submit_controller.sh smoke
+workflow/submit_controller.sh production
 ```
 
 Production submits 256 GiBUU jobs for each of `useCdA=F` and `useCdA=T`.
 Snakemake retries failed jobs twice, retains failed raw event files, and removes
 successful `FinalEvents.dat` files only after validating the converted ROOT
-tree with uproot.
+tree with uproot. The submission wrapper runs the Snakemake controller itself
+as an `sbatch` job on the infinite-time `htc_daemon` partition, so losing the
+SSH connection does not stop DAG scheduling.
+
+If a controller was accidentally run in an interactive SSH session and that
+session was lost, first get the orphan workers' common Slurm job name from
+`squeue`, then submit a dependency-safe recovery controller:
+
+```bash
+workflow/submit_controller.sh production ORPHAN_WORKER_JOB_NAME
+```
+
+The recovery controller stays pending on `htc_daemon` until every captured
+orphan worker is terminal. It then removes the stale Snakemake lock and resumes
+from the outputs already present, avoiding duplicate GiBUU jobs.
 
 Useful monitoring and recovery commands are:
 
