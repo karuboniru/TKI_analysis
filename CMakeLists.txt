@@ -6,7 +6,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 add_link_options(-Wl,--as-needed)
 
 # Locate Boost
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system program_options)
 
 # Include Boost headers
 include_directories(${Boost_INCLUDE_DIRS})
@@ -64,7 +64,7 @@ root_generate_dictionary(G__Dict ${Dict_HEADERS} MODULE analysis LINKDEF LinkDef
 
 
 set(GENERAL_LIBS ROOT::Physics ROOT::ROOTDataFrame ROOT::Tree  ROOT::Hist ROOT::Gpad
-    boost_program_options
+    Boost::program_options
 )
 
 if(NUWRO_DIR)
@@ -197,7 +197,7 @@ add_executable(build_jobcard build_jobcard.cpp)
 
 # Link all the object files to the main executable
 target_link_libraries(build_jobcard PRIVATE
-boost_program_options
+Boost::program_options
 )
 target_compile_definitions(
   build_jobcard PRIVATE
