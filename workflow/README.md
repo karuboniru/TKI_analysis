@@ -111,6 +111,19 @@ provenance manifest. The scenario-level `comparison` directory contains four
 two-panel TKI comparison plots in PDF/SVG/EPS, `comparison.root`, and
 `comparison.json`.
 
+The χ² values can be recomputed directly from completed analysis ROOT files,
+without reading the per-run event trees again. The standalone calculator writes
+absolute and shape-only χ², NDF, χ²/NDF, and candidate-minus-reference deltas
+to an explicitly selected JSON file:
+
+```bash
+build/minerva_tki_chi2 \
+  --model default=/path/to/use_cda_F/analysis/dtl_all.root \
+  --model use_cda=/path/to/use_cda_T/analysis/dtl_all.root \
+  --reference default \
+  --output /path/to/chi2_comparison.json
+```
+
 `workflow/config/minerva_full_factorial.yaml` exposes all legacy GiBUUGEN axes:
 T, T2p2h, Oset width, in-medium NN mode, 2-pion background, A dependence, FSI,
 and useCdA. It expands to 384 samples and 98,304 production GiBUU jobs at the

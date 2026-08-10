@@ -166,6 +166,12 @@ target_link_libraries(minerva_nuclear_model_compare PRIVATE
   ${GENERAL_LIBS}
 )
 
+add_executable(minerva_tki_chi2 minerva_tki_chi2.cpp)
+target_link_libraries(minerva_tki_chi2 PRIVATE
+  ${GENERAL_LIBS}
+  analysis
+)
+
 
 add_executable(t2k_stk_gibuu t2k_stk_gibuu.cpp)
 
