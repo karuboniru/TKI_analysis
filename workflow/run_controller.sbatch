@@ -23,6 +23,7 @@ repo_root=$(cd -- "$script_dir/.." && pwd)
 controller_log=${SNAKEMAKE_CONTROLLER_LOG:-/sps/juno/yqiyu/GiBUUGEN/minerva_useCdA_2025p5/snakemake_${stage}_controller.log}
 controller_env=${SNAKEMAKE_ENV_SCRIPT:-/sps/juno/yqiyu/GiBUUGEN/env.sh}
 controller_python=${SNAKEMAKE_PYTHON:-/cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/bin/python3}
+snakemake_python=${SNAKEMAKE_VENV_PYTHON:-$repo_root/.venv/bin/python}
 
 if [[ ! -f "$controller_env" ]]; then
   printf 'Controller environment script is unavailable: %s\n' "$controller_env" >&2
@@ -38,6 +39,10 @@ if ! env -u PYTHONPATH "$controller_python" --version; then
     "$controller_env" "$controller_python" >&2
   exit 1
 fi
+if ! env -u PYTHONPATH "$snakemake_python" -m snakemake --version; then
+  printf 'Snakemake venv is unavailable: %s\n' "$snakemake_python" >&2
+  exit 1
+fi
 
 cd "$repo_root"
 
@@ -47,17 +52,18 @@ cd "$repo_root"
   printf 'controller_stage=%s\n' "$stage"
   printf 'controller_env=%s\n' "$controller_env"
   printf 'controller_python=%s\n' "$controller_python"
+  printf 'snakemake_python=%s\n' "$snakemake_python"
   printf 'controller_started_at=%s\n' "$(date --iso-8601=seconds)"
 } >> "$controller_log"
 
 if [[ ${SNAKEMAKE_UNLOCK_FIRST:-0} == 1 ]]; then
-  env -u PYTHONPATH UV_PYTHON="$controller_python" uv run --frozen snakemake \
+  env -u PYTHONPATH "$snakemake_python" -m snakemake \
     --snakefile workflow/Snakefile \
     --configfile workflow/config/minerva_usecda.yaml \
     --unlock >> "$controller_log" 2>&1
 fi
 
-exec env -u PYTHONPATH UV_PYTHON="$controller_python" uv run --frozen snakemake \
+exec env -u PYTHONPATH "$snakemake_python" -m snakemake \
   --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm \

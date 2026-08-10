@@ -64,7 +64,9 @@ as an `sbatch` job on the infinite-time `htc_daemon` partition, so losing the
 SSH connection does not stop DAG scheduling. The controller loads the shared
 GiBUUGEN/LCG environment so its Python 3.11 interpreter also works on the
 daemon node, clears LCG's `PYTHONPATH` before invoking Snakemake, and uses the
-frozen lockfile. Prepare that shared environment from a login node with:
+frozen lockfile. The daemon calls `.venv/bin/python -m snakemake` directly,
+avoiding an additional uv entrypoint lookup after submission. Prepare that
+shared environment from a login node with:
 
 ```bash
 set +u
