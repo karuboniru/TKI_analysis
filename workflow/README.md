@@ -61,12 +61,17 @@ Snakemake retries failed jobs twice, retains failed raw event files, and removes
 successful `FinalEvents.dat` files only after validating the converted ROOT
 tree with uproot. The submission wrapper runs the Snakemake controller itself
 as an `sbatch` job on the infinite-time `htc_daemon` partition, so losing the
-SSH connection does not stop DAG scheduling. The controller pins uv to the
-daemon nodes' `/usr/bin/python3.12` and uses the frozen lockfile; prepare that
-shared environment from a login node with:
+SSH connection does not stop DAG scheduling. The controller loads the shared
+GiBUUGEN/LCG environment so its Python 3.11 interpreter also works on the
+daemon node, clears LCG's `PYTHONPATH` before invoking Snakemake, and uses the
+frozen lockfile. Prepare that shared environment from a login node with:
 
 ```bash
-env -u PYTHONPATH uv sync --frozen --python /usr/bin/python3.12
+set +u
+source /sps/juno/yqiyu/GiBUUGEN/env.sh
+set -u
+env -u PYTHONPATH uv sync --frozen \
+  --python /cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/bin/python3
 ```
 
 If a controller was accidentally run in an interactive SSH session and that

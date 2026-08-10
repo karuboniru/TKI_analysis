@@ -21,10 +21,21 @@ esac
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
 controller_log=${SNAKEMAKE_CONTROLLER_LOG:-/sps/juno/yqiyu/GiBUUGEN/minerva_useCdA_2025p5/snakemake_${stage}_controller.log}
-controller_python=${SNAKEMAKE_PYTHON:-/usr/bin/python3.12}
+controller_env=${SNAKEMAKE_ENV_SCRIPT:-/sps/juno/yqiyu/GiBUUGEN/env.sh}
+controller_python=${SNAKEMAKE_PYTHON:-/cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/bin/python3}
 
-if [[ ! -x "$controller_python" ]]; then
-  printf 'Controller Python is unavailable: %s\n' "$controller_python" >&2
+if [[ ! -f "$controller_env" ]]; then
+  printf 'Controller environment script is unavailable: %s\n' "$controller_env" >&2
+  exit 1
+fi
+
+set +u
+source "$controller_env"
+set -u
+
+if ! env -u PYTHONPATH "$controller_python" --version; then
+  printf 'Controller Python is unavailable after loading %s: %s\n' \
+    "$controller_env" "$controller_python" >&2
   exit 1
 fi
 
@@ -34,6 +45,7 @@ cd "$repo_root"
   printf 'controller_job_id=%s\n' "${SLURM_JOB_ID:-unknown}"
   printf 'controller_host=%s\n' "$(hostname)"
   printf 'controller_stage=%s\n' "$stage"
+  printf 'controller_env=%s\n' "$controller_env"
   printf 'controller_python=%s\n' "$controller_python"
   printf 'controller_started_at=%s\n' "$(date --iso-8601=seconds)"
 } >> "$controller_log"
