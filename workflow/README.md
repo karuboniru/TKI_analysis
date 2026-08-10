@@ -62,11 +62,11 @@ successful `FinalEvents.dat` files only after validating the converted ROOT
 tree with uproot. The submission wrapper runs the Snakemake controller itself
 as an `sbatch` job on the infinite-time `htc_daemon` partition, so losing the
 SSH connection does not stop DAG scheduling. The controller pins uv to the
-daemon nodes' `/usr/bin/python3.11` and uses the frozen lockfile; prepare that
+daemon nodes' `/usr/bin/python3.12` and uses the frozen lockfile; prepare that
 shared environment from a login node with:
 
 ```bash
-env -u PYTHONPATH uv sync --frozen --python /usr/bin/python3.11
+env -u PYTHONPATH uv sync --frozen --python /usr/bin/python3.12
 ```
 
 If a controller was accidentally run in an interactive SSH session and that

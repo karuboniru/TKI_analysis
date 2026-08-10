@@ -21,7 +21,7 @@ esac
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
 controller_log=${SNAKEMAKE_CONTROLLER_LOG:-/sps/juno/yqiyu/GiBUUGEN/minerva_useCdA_2025p5/snakemake_${stage}_controller.log}
-controller_python=${SNAKEMAKE_PYTHON:-/usr/bin/python3.11}
+controller_python=${SNAKEMAKE_PYTHON:-/usr/bin/python3.12}
 
 if [[ ! -x "$controller_python" ]]; then
   printf 'Controller Python is unavailable: %s\n' "$controller_python" >&2
