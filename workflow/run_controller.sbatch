@@ -21,6 +21,12 @@ esac
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
 controller_log=${SNAKEMAKE_CONTROLLER_LOG:-/sps/juno/yqiyu/GiBUUGEN/minerva_useCdA_2025p5/snakemake_${stage}_controller.log}
+controller_python=${SNAKEMAKE_PYTHON:-/usr/bin/python3.11}
+
+if [[ ! -x "$controller_python" ]]; then
+  printf 'Controller Python is unavailable: %s\n' "$controller_python" >&2
+  exit 1
+fi
 
 cd "$repo_root"
 
@@ -28,17 +34,18 @@ cd "$repo_root"
   printf 'controller_job_id=%s\n' "${SLURM_JOB_ID:-unknown}"
   printf 'controller_host=%s\n' "$(hostname)"
   printf 'controller_stage=%s\n' "$stage"
+  printf 'controller_python=%s\n' "$controller_python"
   printf 'controller_started_at=%s\n' "$(date --iso-8601=seconds)"
 } >> "$controller_log"
 
 if [[ ${SNAKEMAKE_UNLOCK_FIRST:-0} == 1 ]]; then
-  env -u PYTHONPATH uv run snakemake \
+  env -u PYTHONPATH UV_PYTHON="$controller_python" uv run --frozen snakemake \
     --snakefile workflow/Snakefile \
     --configfile workflow/config/minerva_usecda.yaml \
     --unlock >> "$controller_log" 2>&1
 fi
 
-exec env -u PYTHONPATH uv run snakemake \
+exec env -u PYTHONPATH UV_PYTHON="$controller_python" uv run --frozen snakemake \
   --snakefile workflow/Snakefile \
   --configfile workflow/config/minerva_usecda.yaml \
   --profile workflow/profiles/slurm \
