@@ -19,7 +19,10 @@ case "$stage" in
 esac
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-repo_root=$(cd -- "$script_dir/.." && pwd)
+repo_root=${SNAKEMAKE_REPO_ROOT:-${SLURM_SUBMIT_DIR:-}}
+if [[ -z "$repo_root" ]]; then
+  repo_root=$(cd -- "$script_dir/.." && pwd)
+fi
 controller_log=${SNAKEMAKE_CONTROLLER_LOG:-/sps/juno/yqiyu/GiBUUGEN/minerva_useCdA_2025p5/snakemake_${stage}_controller.log}
 controller_env=${SNAKEMAKE_ENV_SCRIPT:-/sps/juno/yqiyu/GiBUUGEN/env.sh}
 controller_python=${SNAKEMAKE_PYTHON:-/cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/bin/python3}
@@ -50,6 +53,7 @@ cd "$repo_root"
   printf 'controller_job_id=%s\n' "${SLURM_JOB_ID:-unknown}"
   printf 'controller_host=%s\n' "$(hostname)"
   printf 'controller_stage=%s\n' "$stage"
+  printf 'repo_root=%s\n' "$repo_root"
   printf 'controller_env=%s\n' "$controller_env"
   printf 'controller_python=%s\n' "$controller_python"
   printf 'snakemake_python=%s\n' "$snakemake_python"

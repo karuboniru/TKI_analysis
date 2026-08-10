@@ -12,6 +12,7 @@ case "$stage" in
 esac
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+repo_root=$(cd -- "$script_dir/.." && pwd)
 controller_name="smk-minerva-usecda-${stage}"
 if [[ -n $(squeue -h -u "$USER" -n "$controller_name" -o '%A') ]]; then
   printf 'A controller named %s is already queued or running.\n' "$controller_name" >&2
@@ -43,7 +44,9 @@ if [[ -n "$wait_for_job_name" ]]; then
   fi
 fi
 
-sbatch_args+=(--export="ALL,SNAKEMAKE_UNLOCK_FIRST=${unlock_first}")
+sbatch_args+=(
+  --export="ALL,SNAKEMAKE_UNLOCK_FIRST=${unlock_first},SNAKEMAKE_REPO_ROOT=${repo_root}"
+)
 job_id=$(sbatch "${sbatch_args[@]}" "$script_dir/run_controller.sbatch" "$stage")
 printf 'Submitted %s controller as Slurm job %s on htc_daemon.\n' \
   "$stage" "$job_id"

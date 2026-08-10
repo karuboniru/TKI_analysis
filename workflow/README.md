@@ -65,8 +65,9 @@ SSH connection does not stop DAG scheduling. The controller loads the shared
 GiBUUGEN/LCG environment so its Python 3.11 interpreter also works on the
 daemon node, clears LCG's `PYTHONPATH` before invoking Snakemake, and uses the
 frozen lockfile. The daemon calls `.venv/bin/python -m snakemake` directly,
-avoiding an additional uv entrypoint lookup after submission. Prepare that
-shared environment from a login node with:
+avoiding an additional uv entrypoint lookup after submission. The submitter
+also exports the real repository root because Slurm executes a spool copy of
+the batch script. Prepare that shared environment from a login node with:
 
 ```bash
 set +u
